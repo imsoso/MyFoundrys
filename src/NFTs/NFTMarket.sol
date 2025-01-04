@@ -19,7 +19,19 @@ contract NFTMarket {
 
     constructor() {}
 
-    function listNFT(uint tokenId, uint price) public {}
+    // NFTOwner can list a NFT with a price
+    function listNFT(uint tokenId, uint price) public {
+        if (price == 0) {
+            revert PriceGreaterThanZero();
+        }
+
+        if (nft.ownerOf(tokenId) != msg.sender) {
+            revert MustBeTheOwner();
+        }
+
+        nft.safeTransferFrom(msg.sender, address(this), tokenId);
+        nfts[tokenId] = NFT(msg.sender, price);
+    }
 
     function buyNFT() public {}
 }
