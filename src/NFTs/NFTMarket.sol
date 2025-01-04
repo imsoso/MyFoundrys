@@ -16,6 +16,10 @@ contract NFTMarket {
 
     error PriceGreaterThanZero();
     error MustBeTheOwner();
+    error MustNotBeTheOwner();
+    error NotEnoughToken();
+    error NFTNotExist();
+    error TokenTransferFailed();
 
     constructor() {}
 
@@ -33,5 +37,29 @@ contract NFTMarket {
         nfts[tokenId] = NFT(msg.sender, price);
     }
 
-    function buyNFT() public {}
+    function buyNFT(uint nftId) public {
+        NFT memory theNFT = nfts[nftId];
+        address buyer = msg.sender;
+
+        // check own buyer
+        if (theNFT.seller == buyer) {
+            revert MustNotBeTheOwner();
+        }
+
+        // check enough token
+        if (token.balanceOf(buyer) < theNFT.price) {
+            revert NotEnoughToken();
+        }
+
+        // transfer token to seller
+        bool success = token.transferFrom(buyer, theNFT.seller, theNFT.price);
+        if (!success) {
+            revert TokenTransferFailed();
+        }
+        // transfer nft to buyer
+        nft.transferFrom(address(this), buyer, nftId);
+
+        // delete nft
+        delete nfts[nftId];
+    }
 }
