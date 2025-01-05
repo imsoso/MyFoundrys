@@ -21,8 +21,10 @@ contract NFTMarket {
     error NFTNotExist();
     error TokenTransferFailed();
 
-    constructor() {}
-
+    constructor(address _nft, address _token) {
+        nft = IERC721(_nft);
+        token = IERC20(_token);
+    }
     // NFTOwner can list a NFT with a price
     function listNFT(uint nftId, uint price) public {
         if (price == 0) {
