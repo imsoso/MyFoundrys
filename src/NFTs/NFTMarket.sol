@@ -26,21 +26,21 @@ contract NFTMarket {
         token = IERC20(_token);
     }
     // NFTOwner can list a NFT with a price
-    function listNFT(uint nftId, uint price) public {
+    function listNFT(uint tokenID, uint price) public {
         if (price == 0) {
             revert PriceGreaterThanZero();
         }
 
-        if (nft.ownerOf(nftId) != msg.sender) {
+        if (nft.ownerOf(tokenID) != msg.sender) {
             revert MustBeTheOwner();
         }
 
-        nft.safeTransferFrom(msg.sender, address(this), nftId);
-        nfts[nftId] = NFT(msg.sender, price);
+        nft.safeTransferFrom(msg.sender, address(this), tokenID);
+        nfts[tokenID] = NFT(msg.sender, price);
     }
 
-    function buyNFT(uint nftId) public {
-        NFT memory theNFT = nfts[nftId];
+    function buyNFT(uint tokenID) public {
+        NFT memory theNFT = nfts[tokenID];
         address buyer = msg.sender;
 
         // check own buyer
@@ -59,9 +59,9 @@ contract NFTMarket {
             revert TokenTransferFailed();
         }
         // transfer nft to buyer
-        nft.transferFrom(address(this), buyer, nftId);
+        nft.transferFrom(address(this), buyer, tokenID);
 
         // delete nft
-        delete nfts[nftId];
+        delete nfts[tokenID];
     }
 }
