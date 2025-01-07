@@ -5,7 +5,6 @@ import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
-
 contract BaseERC721 {
     using Strings for uint256;
     using Address for address;
@@ -286,7 +285,8 @@ contract BaseERC721 {
      * @return bool whether the call correctly returned the expected magic value
      */
     function _checkOnERC721Received(address from, address to, uint256 tokenId, bytes memory _data) private returns (bool) {
-        if (to.isContract()) {
+        if (to.code.length > 0) {
+            // address is contract
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, _data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
