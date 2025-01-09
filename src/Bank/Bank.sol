@@ -4,14 +4,14 @@ pragma solidity ^0.8.28;
 contract Bank {
     mapping(address => uint256) public balances;
 
-    error DepositMustGreaterTHanZero();
+    error DepositMustGreaterThanZero();
 
     event Deposit(address indexed user, uint256 amount);
 
     constructor() {}
     function deposit() public payable {
         if (msg.value == 0) {
-            revert DepositMustGreaterTHanZero();
+            revert DepositMustGreaterThanZero();
         }
 
         balances[msg.sender] += msg.value;
