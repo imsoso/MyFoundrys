@@ -3,6 +3,9 @@ pragma solidity ^0.8.28;
 
 contract Bank {
     mapping(address => uint256) public balances;
+    address[3] public topDepositors;
+
+    address public owner;
 
     error DepositMustGreaterThanZero();
     error InfufficientBalance();
@@ -21,6 +24,8 @@ contract Bank {
 
         balances[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
+
+        updateTop3Depositor(msg.sender);
     }
 
     // Receive ETH
@@ -42,6 +47,22 @@ contract Bank {
         balances[msg.sender] -= amount;
         emit Withdraw(amount);
     }
+
+    function updateTop3Depositor(address depositor) private {
+        uint newBalance = balances[depositor];
+        uint index = 3;
+        for (uint i = 0; i < 3; i++) {
+            if (newBalance > balances[topDepositors[i]]) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 3) {
+            for (uint i = 2; i > index; i--) {
+                topDepositors[i] = topDepositors[i - 1];
+            }
+            topDepositors[index] = depositor;
         }
     }
 }
