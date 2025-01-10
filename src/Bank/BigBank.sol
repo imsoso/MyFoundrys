@@ -7,13 +7,13 @@ contract BigBank is Bank {
 
     error DepositTooSmall();
     error NotAdmin();
-    error IllegalAddress;
+    error IllegalAddress();
     constructor() {
         admin = msg.sender;
     }
 
     modifier greaterThanOneFinney() {
-        if (msg.value <= 1 finney) {
+        if (msg.value <= 0.001 ether) {
             revert DepositTooSmall();
         }
         _;
@@ -24,8 +24,8 @@ contract BigBank is Bank {
             revert NotAdmin();
         }
 
-        if(newAdmin == address(0)) {
-            revert IllegalAddress(;)
+        if (newAdmin == address(0)) {
+            revert IllegalAddress();
         }
     
         admin = newAdmin;
