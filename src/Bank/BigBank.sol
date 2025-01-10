@@ -8,6 +8,8 @@ contract BigBank is Bank {
     error DepositTooSmall();
     error NotAdmin();
     error IllegalAddress();
+
+    event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
     constructor() {
         admin = msg.sender;
     }
@@ -27,8 +29,8 @@ contract BigBank is Bank {
         if (newAdmin == address(0)) {
             revert IllegalAddress();
         }
-    
+
         admin = newAdmin;
-        
+        emit AdminTransferred(admin, newAdmin);
     }
 }
