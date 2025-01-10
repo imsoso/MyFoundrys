@@ -38,10 +38,10 @@ contract Bank {
             revert InfufficientBalance();
         }
 
-        (bool success, ) = address(this).call{ value: amount }('');
-        if (success) {
-            balances[msg.sender] -= amount;
-            emit Withdraw(amount);
+        payable(owner).transfer(amount);
+        balances[msg.sender] -= amount;
+        emit Withdraw(amount);
+    }
         }
     }
 }
