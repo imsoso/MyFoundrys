@@ -7,5 +7,7 @@ contract Admin {
         owner = msg.sender;
     }
 
-    function adminWithdraw(IBank bank) public {}
+    function adminWithdraw(IBank bank) public {
+        bank.withdraw();
+    }
 }
