@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
-import './Bank.sol';
+import './OriginalBank.sol';
 
-contract BigBank is Bank {
+contract BigBank is OriginalBank {
     address public admin;
 
     error DepositTooSmall();
