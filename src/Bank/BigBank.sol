@@ -20,6 +20,10 @@ contract BigBank is Bank {
         }
         _;
     }
+    // Override the deposit function from the Bank contract
+    function deposit() public payable virtual override greaterThanOneFinney {
+        super.deposit();
+    }
 
     function transferAdmin(address newAdmin) external {
         if (msg.sender != admin) {
