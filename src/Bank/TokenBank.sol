@@ -8,8 +8,10 @@ contract TokenBank {
     mapping(address => uint256) private balances;
 
     error AmountGreaterThanZero();
+    error InfufficientBalance();
 
     event Deposit(address indexed user, uint256 amount);
+    event Withdraw(address indexed user, uint256 amount);
 
     constructor(address _token) {
         token = SoToken(_token);
@@ -25,5 +27,14 @@ contract TokenBank {
         emit Deposit(msg.sender, amount);
     }
 
-    function withdraw() public {}
+    function withdraw(uint amount) public {
+        if (balances[msg.sender] < amount) {
+            revert InfufficientBalance();
+        }
+
+        token.transfer(msg.sender, amount);
+        balances[msg.sender] -= amount;
+
+        emit Withdraw(msg.sender, amount);
+    }
 }
