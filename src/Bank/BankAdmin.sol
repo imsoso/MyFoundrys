@@ -8,6 +8,6 @@ contract Admin {
     }
 
     function adminWithdraw(IBank bank) public {
-        bank.withdraw();
+        bank.withdraw(address(this).balance);
     }
 }

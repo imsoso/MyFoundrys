@@ -17,8 +17,7 @@ interface IBank {
      *
      * Emits a {Withdraw} event.
      */
-    function withdraw(uint amount) external;
-
+    function withdraw(uint256 amount) external;
     // Get balance for a specific address
     function getBalance(address addr) external view returns (uint256);
 

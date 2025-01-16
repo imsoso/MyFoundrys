@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
+import './IBank.sol';
 // OriginalBank contract implementing IBank interface
 contract OriginalBank is IBank {
     address public owner;
@@ -30,7 +31,7 @@ contract OriginalBank is IBank {
     }
 
     // Withdraw function to transfer funds to the owner
-    function withdraw(uint256 amount) public override onlyOwner {
+    function withdraw(uint256 amount) public onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, 'Contract balance is zero');
         require(amount <= balance, 'Insufficient contract balance');
