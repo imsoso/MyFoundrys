@@ -5,7 +5,7 @@ import { SoToken } from '../NFTs/MyToken.sol';
 
 contract TokenBank {
     SoToken token;
-    mapping(address => uint256) private balances;
+    mapping(address => uint256) public balances;
 
     error AmountGreaterThanZero();
     error InfufficientBalance();

@@ -15,7 +15,7 @@ contract BaseERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    constructor() public {
+    constructor() {
         // set name,symbol,decimals,totalSupply
         name = 'BaseERC20';
         symbol = 'BERC20';
