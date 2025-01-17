@@ -12,14 +12,19 @@ contract NFTMarketTest is Test {
     SoNFT public nft;
 
     address public owner;
+    address seller = makeAddr('alice');
+    address buyer = makeAddr('bob');
 
     function setUp() public {
         owner = address(this);
         token = new TokenWithCallback(owner);
         nft = new SoNFT(owner);
-
         nftMarket = new NFTMarket(address(nft), address(token));
+
+        nft.safeMint(seller, 'https://chocolate-acceptable-hawk-967.mypinata.cloud/ipfs/QmSpTwSkZy8Hx7xBDrugDmbzRf5kkwnsVxdsbcAnaHAawu/0');
     }
 
+    function test_ListNFT() public {
+        // assertEq(counter.number(), 1);
     }
 }
