@@ -19,8 +19,11 @@ contract NFTMarket {
     error MustBeTheOwner();
     error MustNotBeTheOwner();
     error NotEnoughToken();
-    error NFTNotExist();
+
     error TokenTransferFailed();
+    error NotERC20Contract();
+    error NFTNotListed();
+    error YouCannotAffordThis();
 
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
@@ -64,5 +67,29 @@ contract NFTMarket {
 
         // delete nft
         delete nfts[tokenID];
+    }
+
+    function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
+        if (msg.sender != address(nftmarket)) {
+            revert NotERC20Contract();
+        }
+
+        uint256 tokenId = abi.decode(userData, (uint));
+        NFT memory theNFT = nfts[tokenId];
+        if (theNFT.price == 0) {
+            revert NFTNotListed();
+        }
+
+        if (amount < theNFT.price) {
+            revert YouCannotAffordThis();
+        }
+
+        bool success = token.transfer(theNFT.seller, amount);
+        if (!success) {
+            revert TokenTransferFailed();
+        }
+
+        nftmarket.safeTransferFrom(msg.sender, from, tokenId);
+        delete nfts[tokenId];
     }
 }
