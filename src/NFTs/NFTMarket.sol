@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../BaseTokens/TokenWithCallback.sol';
+
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 
 contract NFTMarket {
-    IERC20 public token;
-    IERC721 public nft;
+    TokenWithCallback public immutable token;
+    IERC721 public immutable nft;
 
     struct NFT {
         // uint256 tokenId;
@@ -23,7 +24,7 @@ contract NFTMarket {
 
     constructor(address _nft, address _token) {
         nft = IERC721(_nft);
-        token = IERC20(_token);
+        token = TokenWithCallback(_token);
     }
     // NFTOwner can list a NFT with a price
     function listNFT(uint tokenID, uint price) public {
