@@ -5,7 +5,9 @@ import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 
 contract TokenWithCallback is ERC20, Ownable {
-    constructor(address initialOwner) ERC20('MyTokenCall', 'MTKC') Ownable(initialOwner) {}
+    constructor(address initialOwner) ERC20('MyTokenCall', 'MTKC') Ownable(initialOwner) {
+        _mint(msg.sender, 1_000_000 * 10 ** decimals());
+    }
 
     function transferAndCall(address to, uint256 amount, bytes memory data) public returns (bool) {
         bool success = transfer(to, amount);
