@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 
 contract NFTMarket {
     TokenWithCallback public immutable token;
-    IERC721 public immutable nft;
+    IERC721 public immutable nftmarket;
 
     struct NFT {
         // uint256 tokenId;
@@ -23,7 +23,7 @@ contract NFTMarket {
     error TokenTransferFailed();
 
     constructor(address _nft, address _token) {
-        nft = IERC721(_nft);
+        nftmarket = IERC721(_nft);
         token = TokenWithCallback(_token);
     }
     // NFTOwner can list a NFT with a price
@@ -32,11 +32,11 @@ contract NFTMarket {
             revert PriceGreaterThanZero();
         }
 
-        if (nft.ownerOf(tokenID) != msg.sender) {
+        if (nftmarket.ownerOf(tokenID) != msg.sender) {
             revert MustBeTheOwner();
         }
 
-        nft.safeTransferFrom(msg.sender, address(this), tokenID);
+        nftmarket.safeTransferFrom(msg.sender, address(this), tokenID);
         nfts[tokenID] = NFT(msg.sender, price);
     }
 
@@ -60,7 +60,7 @@ contract NFTMarket {
             revert TokenTransferFailed();
         }
         // transfer nft to buyer
-        nft.transferFrom(address(this), buyer, tokenID);
+        nftmarket.transferFrom(address(this), buyer, tokenID);
 
         // delete nft
         delete nfts[tokenID];
