@@ -11,7 +11,7 @@ contract ConstructorExample {
 }
 
 contract Multiplier {
-    function multiplyByTwo(uint number) public view returns (uint) {
+    function multiplyByTwo(uint number) public pure returns (uint) {
         return number * 2;
     }
 }
@@ -70,10 +70,7 @@ contract DataLocation {
     }
 
     // 返回从指定索引开始的数字序列
-    function getNumbers(
-        uint start,
-        uint count
-    ) public view returns (uint[] memory result) {
+    function getNumbers(uint start, uint count) public view returns (uint[] memory result) {
         result = new uint[](count);
         for (uint i = 0; i < count; i++) {
             result[i] = numbers[start + i];
@@ -97,7 +94,7 @@ contract ModifierExample {
     }
 
     modifier isOwner() {
-        require(msg.sender == owner, "Only owner");
+        require(msg.sender == owner, 'Only owner');
         _;
     }
 
@@ -123,7 +120,7 @@ contract Car is Vehicle {
 
     // 重载父类的抽象方法
     function move() public pure override returns (string memory) {
-        return "Car drives on the road";
+        return 'Car drives on the road';
     }
 }
 
@@ -143,7 +140,7 @@ contract Callback {
     }
 
     modifier isOwner() {
-        require(msg.sender == owner, "Caller is not the owner");
+        require(msg.sender == owner, 'Caller is not the owner');
         _;
     }
 
