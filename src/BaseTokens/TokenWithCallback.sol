@@ -7,11 +7,11 @@ import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 contract TokenWithCallback is ERC20, Ownable {
     constructor(address initialOwner) ERC20('MyTokenCall', 'MTKC') Ownable(initialOwner) {}
 
-    function transferWithCallback(address to, uint256 amount) public returns (bool) {
+    function transferAndCall(address to, uint256 amount, bytes memory data) public returns (bool) {
         bool success = transfer(to, amount);
-        if (isContract(to)) {
+        if (success && isContract(to)) {
             // Call target contract tokensReceived()
-            (success, ) = to.call(abi.encodeWithSignature('tokensReceived(address,uint256)', msg.sender, amount));
+            (success, ) = to.call(abi.encodeWithSignature('tokensReceived(msg.sender, to, amount, data)', msg.sender, to, amount, data));
             require(success, 'tokensReceived fail');
         }
 
