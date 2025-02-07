@@ -3,8 +3,9 @@ pragma solidity ^0.8.28;
 import '../BaseTokens/TokenWithCallback.sol';
 
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
-contract NFTMarket {
+contract NFTMarket is IERC721Receiver {
     TokenWithCallback public immutable token;
     IERC721 public immutable nftmarket;
 
@@ -91,5 +92,10 @@ contract NFTMarket {
 
         nftmarket.safeTransferFrom(msg.sender, from, tokenId);
         delete nfts[tokenId];
+    }
+
+    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+        // do nothing but override here
+        return IERC721Receiver.onERC721Received.selector;
     }
 }
