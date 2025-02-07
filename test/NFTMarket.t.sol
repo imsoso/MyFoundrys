@@ -28,7 +28,12 @@ contract NFTMarketTest is Test {
         );
     }
 
-    function test_ListNFT() public {
-        // assertEq(counter.number(), 1);
+    function test_list_succeed() public {
+        vm.startPrank(seller);
+        aNFT.approve(address(aNftMarket), nftId);
+        aNftMarket.listNFT(nftId, 100);
+        vm.stopPrank();
+    }
+
     }
 }
