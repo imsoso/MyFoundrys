@@ -7,21 +7,25 @@ import '../src/BaseTokens/TokenWithCallback.sol';
 import '../src/NFTs/MyNFT.sol';
 
 contract NFTMarketTest is Test {
-    NFTMarket public nftMarket;
-    TokenWithCallback public token;
-    SoNFT public nft;
+    NFTMarket public aNftMarket;
+    TokenWithCallback public aToken;
+    SoNFT public aNFT;
+    uint256 nftId;
 
     address public owner;
-    address seller = makeAddr('alice');
-    address buyer = makeAddr('bob');
+    address seller = makeAddr('seller');
+    address buyer = makeAddr('buyer');
 
     function setUp() public {
         owner = address(this);
-        token = new TokenWithCallback(owner);
-        nft = new SoNFT(owner);
-        nftMarket = new NFTMarket(address(nft), address(token));
+        aToken = new TokenWithCallback(owner);
+        aNFT = new SoNFT(owner);
+        aNftMarket = new NFTMarket(address(aNFT), address(aToken));
 
-        nft.safeMint(seller, 'https://chocolate-acceptable-hawk-967.mypinata.cloud/ipfs/QmSpTwSkZy8Hx7xBDrugDmbzRf5kkwnsVxdsbcAnaHAawu/0');
+        nftId = aNFT.mint(
+            seller,
+            'https://chocolate-acceptable-hawk-967.mypinata.cloud/ipfs/QmRWFi6XoDFchaZ25g8fTRxY3tc4E289AUQvpUcTqP3w7L'
+        );
     }
 
     function test_ListNFT() public {
