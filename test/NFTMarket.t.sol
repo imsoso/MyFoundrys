@@ -102,5 +102,9 @@ contract NFTMarketTest is Test {
         vm.expectRevert(NFTMarket.NFTNotListed.selector);
         aNftMarket.buyNFT(buyer, nftId);
     }
+    //不可变测试：测试无论如何买卖，NFTMarket合约中都不可能有 Token 持仓
+    function invariant_noTokenHoldings() public view {
+        uint256 contractBalance = aToken.balanceOf(address(aNftMarket));
+        assertEq(contractBalance, 0, 'NFTMarket self should not hold any Tokens');
     }
 }
