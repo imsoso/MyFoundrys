@@ -44,10 +44,8 @@ contract NFTMarket is IERC721Receiver {
         nfts[tokenID] = NFT(msg.sender, price);
     }
 
-    function buyNFT(uint tokenID) public {
+    function buyNFT(address buyer, uint tokenID) public {
         NFT memory theNFT = nfts[tokenID];
-        address buyer = msg.sender;
-
         // check own buyer
         if (theNFT.seller == buyer) {
             revert MustNotBeTheOwner();
