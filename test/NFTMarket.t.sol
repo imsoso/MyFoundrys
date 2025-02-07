@@ -102,6 +102,25 @@ contract NFTMarketTest is Test {
         vm.expectRevert(NFTMarket.NFTNotListed.selector);
         aNftMarket.buyNFT(buyer, nftId);
     }
+    /// forge-config: default.fuzz.runs = 100
+    function test_fuzz_buy(uint256 price, address buyer2) public {
+        vm.startPrank(seller);
+        price = bound(price, 0.01 ether, 10000 ether);
+        vm.assume(price > 0.01 ether && price < 10000 ether);
+
+        aNFT.approve(address(aNftMarket), nftId);
+        // Test with random price
+        aNftMarket.listNFT(nftId, price);
+        vm.stopPrank();
+
+        vm.prank(buyer2);
+        aToken.approve(address(aNftMarket), price);
+        deal(address(aToken), buyer2, price);
+
+        // Test with random address
+        aNftMarket.buyNFT(buyer2, nftId);
+    }
+
     //不可变测试：测试无论如何买卖，NFTMarket合约中都不可能有 Token 持仓
     function invariant_noTokenHoldings() public view {
         uint256 contractBalance = aToken.balanceOf(address(aNftMarket));
