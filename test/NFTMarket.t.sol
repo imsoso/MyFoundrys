@@ -62,5 +62,14 @@ contract NFTMarketTest is Test {
         vm.expectRevert(NFTMarket.NotEnoughToken.selector);
         aNftMarket.buyNFT(buyer, nftId);
     }
+    function test_buy_own() public {
+        vm.startPrank(seller);
+        aNFT.approve(address(aNftMarket), nftId);
+        aNftMarket.listNFT(nftId, 100);
+        vm.expectRevert(NFTMarket.MustNotBeTheOwner.selector);
+        aNftMarket.buyNFT(seller, nftId);
+        vm.stopPrank();
+    }
+
     }
 }
