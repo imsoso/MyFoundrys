@@ -12,6 +12,14 @@ contract SoNFT is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
     constructor(address initialOwner) ERC721('SoNFT', 'SSNFT') Ownable(initialOwner) {}
 
+    function mint(address receiver, string memory uri) public returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
+
+        _mint(receiver, tokenId);
+        _setTokenURI(tokenId, uri);
+        return tokenId;
+    }
+
     function safeMint(address to, string memory uri) public onlyOwner {
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
