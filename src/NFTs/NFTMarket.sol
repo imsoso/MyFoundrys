@@ -56,6 +56,10 @@ contract NFTMarket is IERC721Receiver {
             revert NotEnoughToken();
         }
 
+        if (theNFT.seller == address(0)) {
+            revert NFTNotListed();
+        }
+
         // transfer token to seller
         bool success = token.transferFrom(buyer, theNFT.seller, theNFT.price);
         if (!success) {
