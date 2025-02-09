@@ -22,6 +22,7 @@ contract MultiSignWallet {
     error IlegalSigner();
     error NotEnoughApprovals();
     error ExecutionFailed();
+    error AlreadyApproved();
 
     event ProposalInitiate(uint256 indexed proposalID, address to, uint256 value, bytes data);
     event ProposalApproved(uint256 indexed proposalID, address signer);
@@ -61,6 +62,10 @@ contract MultiSignWallet {
 
     function approveProposal(uint256 proposalID) public {
         Proposal storage proposal = proposals[proposalID];
+        if (proposalApprovals[proposalID][msg.sender] == true) {
+            revert AlreadyApproved();
+        }
+
         proposal.approvals++;
         // msg sender approve the proposal
         proposalApprovals[proposalID][msg.sender] = true;
