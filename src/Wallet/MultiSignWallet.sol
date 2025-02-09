@@ -20,6 +20,8 @@ contract MultiSignWallet {
     mapping(uint256 => Proposal) public proposals;
 
     error IlegalSigner();
+    error NotEnoughApprovals();
+    error ExecutionFailed();
 
     event ProposalInitiate(uint256 indexed proposalID, address to, uint256 value, bytes data);
     event ProposalApproved(uint256 indexed proposalID, address signer);
@@ -64,5 +66,16 @@ contract MultiSignWallet {
         proposal.isApproved[msg.sender] = true;
 
         emit ProposalApproved(proposalID, msg.sender);
+    }
+
+    function executeProposal(uint256 proposalID) public {
+        Proposal storage proposal = proposals[proposalID];
+        if (proposal.approvals >= threshold) {
+            // Execute the transaction
+            (bool success, ) = proposal.to.call{ value: proposal.value }(proposal.data);
+            if (!success) revert ExecutionFailed();
+        } else {
+            revert NotEnoughApprovals();
+        }
     }
 }
