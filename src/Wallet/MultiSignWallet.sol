@@ -14,12 +14,16 @@ contract MultiSignWallet {
         uint value;
         bytes data;
         uint approvals;
+        mapping(address => bool) isApproved;
     }
+
     mapping(uint256 => Proposal) public proposals;
 
     error IlegalSigner();
 
     event ProposalInitiate(uint256 indexed proposalID, address to, uint256 value, bytes data);
+    event ProposalApproved(uint256 indexed proposalID, address signer);
+
     constructor(address[] memory _signers, uint _threshold) {
         signers = _signers;
         threshold = _threshold;
@@ -53,6 +57,12 @@ contract MultiSignWallet {
         emit ProposalInitiate(number, to, value, data);
     }
 
-        emit ProposalInitiate(number, _to, _value, _data, 0);
+    function approveProposal(uint256 proposalID) public {
+        Proposal storage proposal = proposals[proposalID];
+        proposal.approvals++;
+        // msg sender approve the proposal
+        proposal.isApproved[msg.sender] = true;
+
+        emit ProposalApproved(proposalID, msg.sender);
     }
 }
