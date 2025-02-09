@@ -25,11 +25,16 @@ contract MultiSignWallet {
     error ExecutionFailed();
     error AlreadyApproved();
     error AlreadyExecuted();
+    error ThresholdIsTooHigh();
 
     event ProposalInitiate(uint256 indexed proposalID, address to, uint256 value, bytes data);
     event ProposalApproved(uint256 indexed proposalID, address signer);
 
     constructor(address[] memory _signers, uint _threshold) {
+        if (_threshold > 0 && _threshold <= _signers.length) {
+            revert ThresholdIsTooHigh();
+        }
+
         signers = _signers;
         threshold = _threshold;
     }
