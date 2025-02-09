@@ -14,10 +14,10 @@ contract MultiSignWallet {
         uint value;
         bytes data;
         uint approvals;
-        mapping(address => bool) isApproved;
     }
 
     mapping(uint256 => Proposal) public proposals;
+    mapping(uint256 => mapping(address => bool)) public proposalApprovals;
 
     error IlegalSigner();
     error NotEnoughApprovals();
@@ -63,7 +63,7 @@ contract MultiSignWallet {
         Proposal storage proposal = proposals[proposalID];
         proposal.approvals++;
         // msg sender approve the proposal
-        proposal.isApproved[msg.sender] = true;
+        proposalApprovals[proposalID][msg.sender] = true;
 
         emit ProposalApproved(proposalID, msg.sender);
     }
