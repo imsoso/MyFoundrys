@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
 
-contract TokenBankPermit {
+contract TokenBank {
     SoToken token;
     mapping(address => uint256) public balances;
 
@@ -21,7 +21,9 @@ contract TokenBankPermit {
             revert AmountGreaterThanZero();
         }
 
-        token.transfer(address(this), amount);
+        bool success = token.transferFrom(msg.sender, address(this), amount);
+        require(success, 'Token transfer failed');
+
         balances[msg.sender] += amount;
 
         emit Deposit(msg.sender, amount);
