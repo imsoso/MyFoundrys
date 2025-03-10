@@ -43,4 +43,10 @@ contract TokenBank {
     function tokenReceived(address from, uint256 amount) public {
         balances[from] += amount;
     }
+
+    function permitDeposit(uint amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {
+        token.permit(msg.sender, address(this), amount, deadline, v, r, s);
+        deposit(amount);
+        emit Deposit(msg.sender, amount);
+    }
 }
