@@ -14,4 +14,19 @@ contract SoToken is ERC20, Ownable, ERC20Permit {
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
+
+    function transferAndCall(address to, uint256 amount, bytes memory data) public returns (bool) {
+        bool success = transfer(to, amount);
+        if (success && isContract(to)) {
+            // Call target contract tokensReceived()
+            (success, ) = to.call(abi.encodeWithSignature('tokensReceived(msg.sender, to, amount, data)', msg.sender, to, amount, data));
+            require(success, 'tokensReceived fail');
+        }
+
+        return true;
+    }
+
+    function isContract(address addr) public view returns (bool) {
+        return addr.code.length != 0;
+    }
 }
