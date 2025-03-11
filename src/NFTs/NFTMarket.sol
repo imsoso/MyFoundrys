@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
+import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract NFTMarket is IERC721Receiver {
@@ -15,6 +16,9 @@ contract NFTMarket is IERC721Receiver {
 
     IERC20 public immutable token;
     IERC721 public immutable nftmarket;
+
+    address public whitelistSigner;
+    IERC20Permit public immutable tokenPermit;
 
     struct NFT {
         // uint256 tokenId;
@@ -32,11 +36,16 @@ contract NFTMarket is IERC721Receiver {
     error NotERC20Contract();
     error NFTNotListed();
     error YouCannotAffordThis();
+
     error NotTheSeller();
+    error NotSignedByWhitelist();
 
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
         token = IERC20(_token);
+
+        whitelistSigner = msg.sender;
+        tokenPermit = IERC20Permit(_token);
     }
     // NFTOwner can list a NFT with a price
     function listNFT(uint tokenID, uint price) public {
@@ -131,5 +140,8 @@ contract NFTMarket is IERC721Receiver {
         bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, tokenID));
         bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
         address theSigner = ethSignedWithSenderAndToken.recover(whitelistSignature);
+        if (theSigner != whitelistSigner) {
+            revert NotSignedByWhitelist();
+        }
     }
 }
