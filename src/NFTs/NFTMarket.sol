@@ -7,12 +7,13 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract NFTMarket is IERC721Receiver {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
-    SoToken public immutable token;
+    IERC20 public immutable token;
     IERC721 public immutable nftmarket;
 
     struct NFT {
@@ -35,7 +36,7 @@ contract NFTMarket is IERC721Receiver {
 
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
-        token = SoToken(_token);
+        token = IERC20(_token);
     }
     // NFTOwner can list a NFT with a price
     function listNFT(uint tokenID, uint price) public {
