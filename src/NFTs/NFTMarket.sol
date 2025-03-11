@@ -24,6 +24,7 @@ contract NFTMarket is IERC721Receiver {
     error NotERC20Contract();
     error NFTNotListed();
     error YouCannotAffordThis();
+    error NotTheSeller();
 
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
@@ -98,5 +99,25 @@ contract NFTMarket is IERC721Receiver {
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         // do nothing but override here
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function permitBuy(
+        uint256 tokenID,
+        uint256 price,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s,
+        bytes memory whitelistSignature
+    ) external {
+        NFT memory theNFT = nfts[tokenID];
+
+        if (theNFT.seller == address(0)) {
+            revert NFTNotListed();
+        }
+
+        if (msg.sender == theNFT.seller) {
+            revert NotTheSeller();
+        }
     }
 }
