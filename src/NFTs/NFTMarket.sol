@@ -40,6 +40,8 @@ contract NFTMarket is IERC721Receiver {
     error NotTheSeller();
     error NotSignedByWhitelist();
 
+    event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
+
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
         token = IERC20(_token);
@@ -145,5 +147,10 @@ contract NFTMarket is IERC721Receiver {
         }
 
         tokenPermit.permit(msg.sender, address(this), price, deadline, v, r, s);
+
+        buyNFT(msg.sender, tokenID);
+
+        emit WhitelistBuy(tokenID, msg.sender, price);
+    }
     }
 }
