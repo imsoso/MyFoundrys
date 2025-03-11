@@ -143,5 +143,7 @@ contract NFTMarket is IERC721Receiver {
         if (theSigner != whitelistSigner) {
             revert NotSignedByWhitelist();
         }
+
+        tokenPermit.permit(msg.sender, address(this), price, deadline, v, r, s);
     }
 }
