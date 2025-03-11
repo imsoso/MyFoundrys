@@ -41,6 +41,8 @@ contract NFTMarket is IERC721Receiver {
     error NotSignedByWhitelist();
 
     event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
+    event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
+    event NFTSold(address indexed seller, address indexed buyer, uint256 price);
 
     constructor(address _nft, address _token) {
         nftmarket = IERC721(_nft);
@@ -61,6 +63,8 @@ contract NFTMarket is IERC721Receiver {
 
         nftmarket.safeTransferFrom(msg.sender, address(this), tokenID);
         nfts[tokenID] = NFT(msg.sender, price);
+
+        emit NFTListed(tokenID, msg.sender, price);
     }
 
     function buyNFT(address buyer, uint tokenID) public {
@@ -89,6 +93,8 @@ contract NFTMarket is IERC721Receiver {
 
         // delete nft
         delete nfts[tokenID];
+
+        emit NFTSold(theNFT.seller, msg.sender, theNFT.price);
     }
 
     function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
@@ -113,6 +119,8 @@ contract NFTMarket is IERC721Receiver {
 
         nftmarket.safeTransferFrom(msg.sender, from, tokenId);
         delete nfts[tokenId];
+
+        emit NFTSold(theNFT.seller, msg.sender, theNFT.price);
     }
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
