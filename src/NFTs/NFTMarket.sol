@@ -4,7 +4,14 @@ import '../BaseTokens/ERC20WithPermit.sol';
 
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
+
 contract NFTMarket is IERC721Receiver {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
+
     SoToken public immutable token;
     IERC721 public immutable nftmarket;
 
@@ -119,5 +126,9 @@ contract NFTMarket is IERC721Receiver {
         if (msg.sender == theNFT.seller) {
             revert NotTheSeller();
         }
+
+        bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, tokenID));
+        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
+        address theSigner = ethSignedWithSenderAndToken.recover(whitelistSignature);
     }
 }
