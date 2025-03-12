@@ -5,7 +5,10 @@ import { Test, console } from 'forge-std/Test.sol';
 import { NFTMarket } from '../src/NFTs/NFTMarket.sol';
 import '../src/BaseTokens/ERC20WithPermit.sol';
 import '../src/NFTs/MyNFT.sol';
+import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 contract NFTMarketTest is Test {
+    using MessageHashUtils for bytes32;
+
     NFTMarket public aNftMarket;
     SoToken public aToken;
     SoNFT public aNFT;
@@ -13,11 +16,21 @@ contract NFTMarketTest is Test {
 
     address public owner;
     address seller = makeAddr('seller');
-    address buyer = makeAddr('buyer');
+
+    address buyer;
+    uint256 public buyerPrivateKey;
+
+    address public whitelistSigner;
+    uint256 public whitelistSignerPrivateKey;
 
     function setUp() public {
         owner = address(this);
-        aToken = new TokenWithCallback(owner);
+        buyerPrivateKey = 0x1234;
+        buyer = vm.addr(buyerPrivateKey);
+
+        whitelistSignerPrivateKey = 0x6789;
+        whitelistSigner = vm.addr(whitelistSignerPrivateKey);
+
         aToken = new SoToken(owner);
         aNFT = new SoNFT(owner);
         aNftMarket = new NFTMarket(owner, address(aNFT), address(aToken));
