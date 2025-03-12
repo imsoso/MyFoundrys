@@ -106,7 +106,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
     }
 
     function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
-        if (msg.sender != address(nftmarket)) {
+        if (msg.sender != address(token)) {
             revert NotERC20Contract();
         }
 
