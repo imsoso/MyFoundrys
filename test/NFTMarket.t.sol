@@ -3,12 +3,11 @@ pragma solidity ^0.8.13;
 
 import { Test, console } from 'forge-std/Test.sol';
 import { NFTMarket } from '../src/NFTs/NFTMarket.sol';
-import '../src/BaseTokens/TokenWithCallback.sol';
+import '../src/BaseTokens/ERC20WithPermit.sol';
 import '../src/NFTs/MyNFT.sol';
-
 contract NFTMarketTest is Test {
     NFTMarket public aNftMarket;
-    TokenWithCallback public aToken;
+    SoToken public aToken;
     SoNFT public aNFT;
     uint256 nftId;
 
@@ -19,8 +18,9 @@ contract NFTMarketTest is Test {
     function setUp() public {
         owner = address(this);
         aToken = new TokenWithCallback(owner);
+        aToken = new SoToken(owner);
         aNFT = new SoNFT(owner);
-        aNftMarket = new NFTMarket(address(aNFT), address(aToken));
+        aNftMarket = new NFTMarket(owner, address(aNFT), address(aToken));
 
         nftId = aNFT.mint(
             seller,
