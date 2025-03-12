@@ -161,8 +161,6 @@ contract NFTMarketTest is Test {
         vm.prank(buyer);
         aNftMarket.permitBuy(nftId, price, block.timestamp + 1 days, v, r, s, whitelistSignature);
 
-        assertEq(aNFT.ownerOf(nftId), buyer, 'NFT is not belong to you');
-
         // Check results
         assertEq(aNFT.ownerOf(nftId), buyer, 'NFT is not belong to you');
         assertEq(aToken.balanceOf(seller), price);
