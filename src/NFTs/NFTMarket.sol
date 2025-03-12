@@ -155,6 +155,10 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
             revert NotTheSeller();
         }
 
+        if (price < theNFT.price) {
+            revert YouCannotAffordThis();
+        }
+
         bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, tokenID));
         bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
         address theSigner = ethSignedWithSenderAndToken.recover(whitelistSignature);
