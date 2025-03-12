@@ -37,7 +37,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
     error NotERC20Contract();
     error NFTNotListed();
     error YouCannotAffordThis();
-
+    error IncorrectPayment(uint256 expected, uint256 received);
     error NotTheSeller();
     error NotSignedByWhitelist();
     error InvalidWhitelistSigner();
@@ -116,8 +116,8 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
             revert NFTNotListed();
         }
 
-        if (amount < theNFT.price) {
-            revert YouCannotAffordThis();
+        if (amount != theNFT.price) {
+            revert IncorrectPayment(theNFT.price, amount);
         }
 
         bool success = token.transfer(theNFT.seller, amount);
@@ -155,8 +155,8 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
             revert NotTheSeller();
         }
 
-        if (price < theNFT.price) {
-            revert YouCannotAffordThis();
+        if (price != theNFT.price) {
+            revert IncorrectPayment(theNFT.price, price);
         }
 
         bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, tokenID));
