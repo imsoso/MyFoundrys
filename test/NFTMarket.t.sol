@@ -145,4 +145,20 @@ contract NFTMarketTest is Test {
         return abi.encodePacked(r, s, v);
     }
 
+    function signPermit(address user, uint price) internal view returns (uint8, bytes32, bytes32) {
+        uint256 deadline = block.timestamp + 1 days;
+        bytes32 messageHash = keccak256(
+            abi.encode(
+                keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'),
+                user,
+                address(aNftMarket),
+                price,
+                aToken.nonces(user),
+                deadline
+            )
+        );
+
+        bytes32 permitHash = keccak256(abi.encodePacked('\x19\x01', aToken.DOMAIN_SEPARATOR(), messageHash));
+        return vm.sign(buyerPrivateKey, permitHash);
+    }
 }
