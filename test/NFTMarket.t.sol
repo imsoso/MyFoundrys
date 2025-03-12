@@ -139,4 +139,10 @@ contract NFTMarketTest is Test {
         uint256 contractBalance = aToken.balanceOf(address(aNftMarket));
         assertEq(contractBalance, 0, 'NFTMarket self should not hold any Tokens');
     }
+    function signWhitelist(address user, uint tokenId) internal view returns (bytes memory) {
+        bytes32 message = keccak256(abi.encodePacked(user, tokenId)).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(whitelistSignerPrivateKey, message);
+        return abi.encodePacked(r, s, v);
+    }
+
 }
