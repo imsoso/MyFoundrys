@@ -10,8 +10,9 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 
-contract NFTMarket is IERC721Receiver, ReentrancyGuard {
+contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -46,17 +47,12 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
     event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
     event NFTSold(address indexed seller, address indexed buyer, uint256 price);
 
-    constructor(address _nft, address _token) {
+    constructor(address initialOwner, address _nft, address _token) Ownable(initialOwner) {
         nftmarket = IERC721(_nft);
         token = IERC20(_token);
 
         whitelistSigner = msg.sender;
         tokenPermit = IERC20Permit(_token);
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == address(this), 'Owner only');
-        _;
     }
 
     // NFTOwner can list a NFT with a price
