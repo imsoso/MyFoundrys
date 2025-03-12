@@ -6,11 +6,12 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-contract NFTMarket is IERC721Receiver {
+contract NFTMarket is IERC721Receiver, ReentrancyGuard {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -74,7 +75,7 @@ contract NFTMarket is IERC721Receiver {
         emit NFTListed(tokenID, msg.sender, price);
     }
 
-    function buyNFT(address buyer, uint tokenID) public {
+    function buyNFT(address buyer, uint tokenID) public nonReentrant {
         NFT memory theNFT = nfts[tokenID];
         // check own buyer
         if (theNFT.seller == buyer) {
