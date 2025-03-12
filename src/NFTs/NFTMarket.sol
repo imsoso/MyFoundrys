@@ -39,6 +39,7 @@ contract NFTMarket is IERC721Receiver {
 
     error NotTheSeller();
     error NotSignedByWhitelist();
+    error InvalidWhitelistSigner();
 
     event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
     event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
@@ -51,6 +52,12 @@ contract NFTMarket is IERC721Receiver {
         whitelistSigner = msg.sender;
         tokenPermit = IERC20Permit(_token);
     }
+
+    modifier onlyOwner() {
+        require(msg.sender == address(this), 'Owner only');
+        _;
+    }
+
     // NFTOwner can list a NFT with a price
     function listNFT(uint tokenID, uint price) public {
         if (price == 0) {
@@ -160,5 +167,11 @@ contract NFTMarket is IERC721Receiver {
 
         emit WhitelistBuy(tokenID, msg.sender, price);
     }
+
+    function setWhitelistSigner(address _whitelistSigner) external onlyOwner {
+        if (_whitelistSigner == address(0)) {
+            revert InvalidWhitelistSigner();
+        }
+        whitelistSigner = _whitelistSigner;
     }
 }
