@@ -102,7 +102,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard {
         // delete nft
         delete nfts[tokenID];
 
-        emit NFTSold(theNFT.seller, msg.sender, theNFT.price);
+        emit NFTSold(theNFT.seller, buyer, theNFT.price);
     }
 
     function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
