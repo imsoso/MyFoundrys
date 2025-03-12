@@ -169,6 +169,28 @@ contract NFTMarketTest is Test {
         assertEq(listedPrice, 0);
     }
 
+    function testPermitBuyNotInWhitelist() public {
+        uint price = 100;
+
+        // List NFT for sale
+        vm.startPrank(seller);
+        aNFT.approve(address(aNftMarket), nftId);
+        aNftMarket.listNFT(nftId, price);
+        vm.stopPrank();
+
+        // Fund buyer & set whitelist signer
+        deal(address(aToken), buyer, 10000);
+        // Generate personal signatures
+        bytes memory whitelistSignature = signWhitelist(buyer, nftId);
+
+        // Generate EIP712 Typed Data and sign
+        (uint8 v, bytes32 r, bytes32 s) = signPermit(buyer, price);
+
+        vm.prank(buyer);
+        vm.expectRevert(NFTMarket.NotSignedByWhitelist.selector);
+        aNftMarket.permitBuy(nftId, price, block.timestamp + 1 days, v, r, s, whitelistSignature);
+    }
+
     function signWhitelist(address user, uint tokenId) internal view returns (bytes memory) {
         bytes32 message = keccak256(abi.encodePacked(user, tokenId)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(whitelistSignerPrivateKey, message);
