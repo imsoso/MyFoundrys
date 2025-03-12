@@ -162,6 +162,13 @@ contract NFTMarketTest is Test {
         aNftMarket.permitBuy(nftId, price, block.timestamp + 1 days, v, r, s, whitelistSignature);
 
         assertEq(aNFT.ownerOf(nftId), buyer, 'NFT is not belong to you');
+
+        // Check results
+        assertEq(aNFT.ownerOf(nftId), buyer, 'NFT is not belong to you');
+        assertEq(aToken.balanceOf(seller), price);
+        (address listedSeller, uint256 listedPrice) = aNftMarket.nfts(nftId);
+        assertEq(listedSeller, address(0));
+        assertEq(listedPrice, 0);
     }
 
     function signWhitelist(address user, uint tokenId) internal view returns (bytes memory) {
