@@ -56,6 +56,8 @@ contract TokenBank {
     }
 
     function depositWithPermit2(SoToken _token, uint256 amount, uint256 nonce, uint256 deadline, bytes calldata signature) external {
+        balances[msg.sender] += amount;
+
         // Transfer tokens from the caller to ourselves.
         permit2.permitTransferFrom(
             // The permit message. Spender will be inferred as the caller (us).
