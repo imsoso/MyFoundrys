@@ -54,4 +54,25 @@ contract TokenBank {
         deposit(amount);
         emit Deposit(msg.sender, amount);
     }
+
+    function depositWithPermit2(SoToken _token, uint256 amount, uint256 nonce, uint256 deadline, bytes calldata signature) external {
+        // Transfer tokens from the caller to ourselves.
+        permit2.permitTransferFrom(
+            // The permit message. Spender will be inferred as the caller (us).
+            ISignatureTransfer.PermitTransferFrom({
+                permitted: ISignatureTransfer.TokenPermissions({ token: address(_token), amount: amount }),
+                nonce: nonce,
+                deadline: deadline
+            }),
+            // The transfer recipient and amount.
+            ISignatureTransfer.SignatureTransferDetails({ to: address(this), requestedAmount: amount }),
+            // The owner of the tokens, which must also be
+            // the signer of the message, otherwise this call
+            // will fail.
+            msg.sender,
+            // The packed signature that was the result of signing
+            // the EIP712 hash of `permit`.
+            signature
+        );
+    }
 }
