@@ -17,7 +17,7 @@ contract TokenBankTest is Test {
         ownerAccount = vm.addr(ownerPrivateKey);
 
         aToken = new SoToken(address(this));
-        aTokenBank = new TokenBank(address(aToken));
+        aTokenBank = new TokenBank(address(aToken), address(0));
         aToken.transfer(ownerAccount, 500 * 10 ** 18);
     }
 
