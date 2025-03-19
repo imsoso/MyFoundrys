@@ -55,4 +55,19 @@ contract TokenBankTest is Test {
             'OwnerAccount should have 100 tokens in Bank'
         );
     }
+
+    // find the next available nonce
+    function _findNextNonce(uint256 bitmap, uint256 wordPos) internal pure returns (uint256) {
+        // find the first unused bit in the current bitmap
+        uint256 bit;
+        for (bit = 0; bit < 256; bit++) {
+            if ((bitmap & (1 << bit)) == 0) {
+                break;
+            }
+        }
+
+        // calculate the full nonce
+        // nonce = (wordPos << 8) | bit
+        return (wordPos << 8) | bit;
+    }
 }
