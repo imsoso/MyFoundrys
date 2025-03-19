@@ -23,11 +23,16 @@ contract TokenBankTest is Test, DeployPermit2 {
         // deploy permit2
         permit2 = IPermit2(deployPermit2());
         console2.log('permit2');
+
+        // Deploy token and bank
+        aToken = new SoToken(address(this));
+        aTokenBank = new TokenBank(address(aToken), address(permit2));
+
+        // Setup ownerAccount
         ownerPrivateKey = 0xa11ce;
         ownerAccount = vm.addr(ownerPrivateKey);
 
-        aToken = new SoToken(address(this));
-        aTokenBank = new TokenBank(address(aToken), address(0));
+        // Transfer tokens to ownerAccount
         aToken.transfer(ownerAccount, 500 * 10 ** 18);
     }
 
