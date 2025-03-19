@@ -34,6 +34,11 @@ contract TokenBankTest is Test, DeployPermit2 {
 
         // Transfer tokens to ownerAccount
         aToken.transfer(ownerAccount, 500 * 10 ** 18);
+
+        // User approves Permit2
+        vm.startPrank(ownerAccount);
+        aToken.approve(address(permit2), type(uint256).max);
+        vm.stopPrank();
     }
 
     function testPermitDeposit() public {
