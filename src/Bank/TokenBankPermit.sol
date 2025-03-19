@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
-import { ISignatureTransfer } from 'permit2/interfaces/ISignatureTransfer.sol';
+import { ISignatureTransfer } from 'permit2/src/interfaces/ISignatureTransfer.sol';
 
 contract TokenBank {
     SoToken token;
