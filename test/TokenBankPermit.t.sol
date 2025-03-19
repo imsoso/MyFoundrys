@@ -2,17 +2,27 @@
 pragma solidity ^0.8.13;
 
 import { Test, console } from 'forge-std/Test.sol';
+import 'forge-std/console2.sol';
 import { TokenBank } from '../src/Bank/TokenBankPermit.sol';
 import '../src/BaseTokens/ERC20WithPermit.sol';
+import 'permit2/src/interfaces/IPermit2.sol';
+import { DeployPermit2 } from 'permit2/test/utils/DeployPermit2.sol';
 
-contract TokenBankTest is Test {
+contract TokenBankTest is Test, DeployPermit2 {
     TokenBank public aTokenBank;
     SoToken public aToken;
 
     address public ownerAccount;
     uint256 internal ownerPrivateKey;
 
+    IPermit2 public permit2;
+    // Permit2 contract address
+    // address constant PERMIT2_ADDRESS = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
+
     function setUp() public {
+        // deploy permit2
+        permit2 = IPermit2(deployPermit2());
+        console2.log('permit2');
         ownerPrivateKey = 0xa11ce;
         ownerAccount = vm.addr(ownerPrivateKey);
 
