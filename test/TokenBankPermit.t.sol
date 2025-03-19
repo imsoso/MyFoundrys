@@ -5,7 +5,9 @@ import { Test, console } from 'forge-std/Test.sol';
 import 'forge-std/console2.sol';
 import { TokenBank } from '../src/Bank/TokenBankPermit.sol';
 import '../src/BaseTokens/ERC20WithPermit.sol';
+import 'permit2/src/interfaces/ISignatureTransfer.sol';
 import 'permit2/src/interfaces/IPermit2.sol';
+import '@openzeppelin/contracts/utils/Strings.sol';
 import { DeployPermit2 } from 'permit2/test/utils/DeployPermit2.sol';
 
 contract TokenBankTest is Test, DeployPermit2 {
@@ -74,6 +76,55 @@ contract TokenBankTest is Test, DeployPermit2 {
             400 * 10 ** 18, //500-100
             'OwnerAccount should have 100 tokens in Bank'
         );
+    }
+
+    function testDepositWithPermit2() public {
+        uint256 depositAmount = 500 * 10 ** 18;
+
+        // get the nonce
+        uint256 wordPos = 0;
+        uint256 bitmap = permit2.nonceBitmap(ownerAccount, wordPos);
+        uint256 nonce = _findNextNonce(bitmap, wordPos);
+        console2.log('nonce:', nonce);
+
+        uint256 deadline = block.timestamp + 1 hours;
+
+        // Create permit message
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({ token: address(aToken), amount: depositAmount }),
+            nonce: nonce,
+            deadline: deadline
+        });
+
+        console2.log('Initial user balance: %d', aToken.balanceOf(ownerAccount));
+        console2.log('Initial bank balance: %d', aToken.balanceOf(address(aTokenBank)));
+        console2.log('Permit2 allowance: %d', aToken.allowance(ownerAccount, address(permit2)));
+
+        // get the digest
+        bytes32 digest = _getPermitTransferFromDigest(permit, address(aTokenBank), address(permit2));
+        console2.log('digest: %s', Strings.toHexString(uint256(digest)));
+
+        // sign the digest
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ownerPrivateKey, digest);
+        console2.log('v: %s', Strings.toHexString(uint256(v)));
+        console2.log('r: %s', Strings.toHexString(uint256(r)));
+        console2.log('s: %s', Strings.toHexString(uint256(s)));
+
+        // encode the signature
+        bytes memory signature = abi.encodePacked(r, s, v);
+        console2.log('signature:');
+        console2.logBytes(signature);
+
+        // Execute deposit with permit2
+        vm.prank(ownerAccount);
+        aTokenBank.depositWithPermit2(aToken, depositAmount, nonce, deadline, signature);
+
+        console2.log('bank balance: %d', aTokenBank.balances(ownerAccount));
+        console2.log('bank token balance: %d', aToken.balanceOf(address(aTokenBank)));
+
+        // Verify deposit
+        assertEq(aTokenBank.balances(ownerAccount), depositAmount, 'Bank balance should match deposit amount');
+        assertEq(aToken.balanceOf(address(aTokenBank)), depositAmount, 'Bank token balance should increase by deposit amount');
     }
 
     // find the next available nonce
