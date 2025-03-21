@@ -21,8 +21,11 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public implementationContract;
 
     error PerMintExceedsTotalSupply();
+    error TokenNotDeployedByFactory();
+    error ExceedsTotalSupply();
 
     event InscriptionDeployed(address indexed tokenAddress, string symbol, uint256 totalSupply, uint256 perMint);
+    event InscriptionMinted(address indexed tokenAddress, address indexed to, uint256 amount);
 
     constructor() {
         // disable initializer
@@ -51,6 +54,22 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return newToken;
     }
 
+    function mintInscription(address tokenAddr) external {
+        TokenInfo storage info = tokenInfo[tokenAddr];
+
+        // check token is deployed by factory
+        if (info.totalSupply == 0) revert TokenNotDeployedByFactory();
+        // check minted amount
+        if (info.mintedAmount + info.perMint > info.totalSupply) revert ExceedsTotalSupply();
+
+        InscriptionToken(tokenAddr).mint(msg.sender, info.perMint);
+
+        // update minted amount
+        info.mintedAmount += info.perMint;
+
+        // emit event
+        emit InscriptionMinted(tokenAddr, msg.sender, info.perMint);
+    }
     // authorize upgrade(only owner)
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
