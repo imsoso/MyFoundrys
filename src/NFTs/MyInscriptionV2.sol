@@ -15,6 +15,7 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 totalSupply; // total supply
         uint256 perMint; // per mint amount
         uint256 mintedAmount; // minted amount
+        uint256 price; // token mint cost
     }
     mapping(address => TokenInfo) public tokenInfo;
 
@@ -41,14 +42,14 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         implementationContract = address(tokenImpl);
     }
 
-    function deployInscription(string memory symbol, uint totalSupply, uint perMint) external returns (address) {
+    function deployInscription(string memory symbol, uint totalSupply, uint perMint, uint price) external returns (address) {
         // check per mint amount
         if (perMint > totalSupply) revert PerMintExceedsTotalSupply();
 
         address newToken = Clones.clone(implementationContract);
         InscriptionToken(newToken).initialize('MyInscriptionToken', 'MIT', address(this));
 
-        tokenInfo[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0 });
+        tokenInfo[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0, price: price });
 
         emit InscriptionDeployed(newToken, symbol, totalSupply, perMint);
         return newToken;
