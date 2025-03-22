@@ -8,7 +8,7 @@ import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/O
 import { UUPSUpgradeable } from '@openzeppelin-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol';
 import { InscriptionToken } from '../BaseTokens/InscriptionToken.sol';
 
-contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract MyInscriptionV2 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     InscriptionToken aToken;
     // token struct
     struct TokenInfo {
