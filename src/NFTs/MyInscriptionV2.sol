@@ -24,6 +24,7 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     error PerMintExceedsTotalSupply();
     error TokenNotDeployedByFactory();
     error ExceedsTotalSupply();
+    error InsufficientPayment();
 
     event InscriptionDeployed(address indexed tokenAddress, string symbol, uint256 totalSupply, uint256 perMint);
     event InscriptionMinted(address indexed tokenAddress, address indexed to, uint256 amount);
@@ -55,13 +56,17 @@ contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return newToken;
     }
 
-    function mintInscription(address tokenAddr) external {
+    function mintInscription(address tokenAddr) external payable {
         TokenInfo storage info = tokenInfo[tokenAddr];
 
         // check token is deployed by factory
         if (info.totalSupply == 0) revert TokenNotDeployedByFactory();
         // check minted amount
         if (info.mintedAmount + info.perMint > info.totalSupply) revert ExceedsTotalSupply();
+
+        // check payment
+        if (msg.value < info.price * info.perMint) revert InsufficientPayment();
+        InscriptionToken(tokenAddr).transfer(address(this), info.price);
 
         InscriptionToken(tokenAddr).mint(msg.sender, info.perMint);
 
