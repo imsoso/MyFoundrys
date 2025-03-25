@@ -29,7 +29,11 @@ contract RenftMarket is EIP712 {
     error TimeExpired();
     error NotEnoughCollateral();
     error InvalidSignature();
+    error OrderNotListed();
+    error InsufficientCancelFee();
+
     IERC721 public immutable nftmarket;
+    uint256 public cancelFee = 0.001 ether; // default cancel fee
 
     // Type hash for the RentoutOrder struct (must match the struct definition)
     bytes32 private constant RENTOUT_ORDER_TYPEHASH =
@@ -87,8 +91,24 @@ contract RenftMarket is EIP712 {
      * 1. When canceling an order, ensure the cancellation is recorded on-chain to prevent the order from being reused.
      * 2. DOS Protection: Canceling an order should incur a cost to prevent spamming.
      */
-    function cancelOrder(RentoutOrder calldata order, bytes calldata makerSignatre) external {
-        revert('TODO');
+    function cancelOrder(RentoutOrder calldata order, bytes calldata makerSignatre) external payable {
+        if (NFTs[order.token_id].token_id == 0) {
+            revert OrderNotListed();
+        }
+
+        bytes32 orderdHash = orderHash(order);
+        address signer = ECDSA.recover(orderdHash, makerSignatre);
+        if (signer != order.maker) {
+            revert InvalidSignature();
+        }
+
+        if (msg.value >= cancelFee) {
+            revert InsufficientCancelFee();
+        }
+
+        delete NFTs[order.token_id];
+        canceledOrders[orderdHash] = true;
+        emit OrderCanceled(order.maker, orderdHash);
     }
 
     // Compute the order hash
