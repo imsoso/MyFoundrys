@@ -22,6 +22,12 @@ contract RenftMarket is EIP712 {
     // Event emitted when an order is canceled
     event OrderCanceled(address indexed maker, bytes32 orderHash);
 
+
+    // Type hash for the RentoutOrder struct (must match the struct definition)
+    bytes32 private constant RENTOUT_ORDER_TYPEHASH =
+        keccak256(
+            'RentoutOrder(address maker,address nft_ca,uint256 token_id,uint256 daily_rent,uint256 max_rental_duration,uint256 min_collateral,uint256 list_endtime)'
+        );
     mapping(bytes32 => BorrowOrder) public orders; // Active rental orders
     mapping(bytes32 => bool) public canceledOrders; // Canceled orders
 
@@ -45,7 +51,22 @@ contract RenftMarket is EIP712 {
 
     // Compute the order hash
     function orderHash(RentoutOrder calldata order) public view returns (bytes32) {
-        revert('TODO');
+        // Encode the order data into a struct hash
+        bytes32 structHash = keccak256(
+            abi.encode(
+                RENTOUT_ORDER_TYPEHASH,
+                order.maker,
+                order.nft_ca,
+                order.token_id,
+                order.daily_rent,
+                order.max_rental_duration,
+                order.min_collateral,
+                order.list_endtime
+            )
+        );
+
+        // Combine with domain separator for final EIP-712 hash
+        return _hashTypedDataV4(structHash);
     }
 
     struct RentoutOrder {
