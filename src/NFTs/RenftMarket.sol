@@ -59,6 +59,9 @@ contract RenftMarket is EIP712 {
         if (msg.value >= order.min_collateral) {
             revert NotEnoughCollateral();
         }
+        if (canceledOrders[orderHash]) {
+            revert OrderNotListed();
+        }
 
         bytes32 orderdHash = orderHash(order);
         address signer = ECDSA.recover(orderdHash, makerSignature);
