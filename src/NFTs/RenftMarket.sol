@@ -26,6 +26,9 @@ contract RenftMarket is EIP712 {
 
     error PriceGreaterThanZero();
     error MustBeTheOwner();
+    error TimeExpired();
+    error NotEnoughCollateral();
+    error InvalidSignature();
     IERC721 public immutable nftmarket;
 
     // Type hash for the RentoutOrder struct (must match the struct definition)
@@ -45,7 +48,25 @@ contract RenftMarket is EIP712 {
      * @dev After verifying the signature, transfer the NFT from the lessor to the tenant and store the order details.
      */
     function borrow(RentoutOrder calldata order, bytes calldata makerSignature) external payable {
-        revert('TODO');
+        if (block.timestamp <= order.list_endtime) {
+            revert TimeExpired();
+        }
+
+        if (msg.value >= order.min_collateral) {
+            revert NotEnoughCollateral();
+        }
+
+        bytes32 orderdHash = orderHash(order);
+        address signer = ECDSA.recover(orderdHash, makerSignature);
+        if (signer != order.maker) {
+            revert InvalidSignature();
+        }
+
+        nftmarket.safeTransferFrom(msg.sender, order.maker, order.token_id);
+        orders[orderdHash] = BorrowOrder(msg.sender, msg.value, block.timestamp, order);
+
+        delete NFTs[order.token_id];
+        emit BorrowNFT(order.maker, msg.sender, orderdHash, msg.value);
     }
 
     function listNFT(RentoutOrder calldata order) public {
