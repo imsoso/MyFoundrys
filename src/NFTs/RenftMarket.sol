@@ -49,7 +49,7 @@ contract RenftMarket is EIP712 {
     }
 
     struct RentoutOrder {
-        address maker; // Lessor's address
+        address maker; // Lender's address
         address nft_ca; // NFT contract address
         uint256 token_id; // NFT tokenId
         uint256 daily_rent; // Daily rent price
@@ -60,7 +60,7 @@ contract RenftMarket is EIP712 {
 
     // Rental order details
     struct BorrowOrder {
-        address taker; // Tenant's address
+        address taker; // Renter's address
         uint256 collateral; // Collateral amount
         uint256 start_time; // Rental start time (used for rent calculation)
         RentoutOrder rentinfo; // Original rental order
