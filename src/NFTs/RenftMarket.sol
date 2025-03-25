@@ -52,7 +52,7 @@ contract RenftMarket is EIP712 {
      * @dev After verifying the signature, transfer the NFT from the lessor to the tenant and store the order details.
      */
     function borrow(RentoutOrder calldata order, bytes calldata makerSignature) external payable {
-        if (block.timestamp <= order.list_endtime) {
+        if (block.timestamp >= order.list_endtime) {
             revert TimeExpired();
         }
 
@@ -105,7 +105,7 @@ contract RenftMarket is EIP712 {
             revert InvalidSignature();
         }
 
-        if (msg.value >= cancelFee) {
+        if (msg.value <= cancelFee) {
             revert InsufficientCancelFee();
         }
 
