@@ -114,6 +114,23 @@ contract RenftMarket is EIP712 {
         emit OrderCanceled(order.maker, orderdHash);
     }
 
+    function returnNFT(bytes32 orderHash) external {
+        BorrowOrder storage order = orders[orderHash];
+        require(msg.sender == order.taker, 'Not renter');
+
+        // calcaute rent price
+        uint256 rentedDays = (block.timestamp - order.start_time) / 1 days;
+        uint256 totalRent = rentedDays * order.rentinfo.daily_rent;
+
+        // return rest collateral
+        payable(order.taker).transfer(order.collateral - totalRent);
+
+        // transfer nft back
+        nftmarket.safeTransferFrom(address(this), order.rentinfo.maker, order.rentinfo.token_id);
+
+        delete orders[orderHash];
+    }
+
     // Compute the order hash
     function orderHash(RentoutOrder calldata order) public view returns (bytes32) {
         // Encode the order data into a struct hash
