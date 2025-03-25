@@ -22,12 +22,19 @@ contract RenftMarket is EIP712 {
     // Event emitted when an order is canceled
     event OrderCanceled(address indexed maker, bytes32 orderHash);
 
+    event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
+
+    error PriceGreaterThanZero();
+    error MustBeTheOwner();
+    IERC721 public immutable nftmarket;
 
     // Type hash for the RentoutOrder struct (must match the struct definition)
     bytes32 private constant RENTOUT_ORDER_TYPEHASH =
         keccak256(
             'RentoutOrder(address maker,address nft_ca,uint256 token_id,uint256 daily_rent,uint256 max_rental_duration,uint256 min_collateral,uint256 list_endtime)'
         );
+
+    mapping(uint256 => RentoutOrder) public NFTs; // listed NFTs
     mapping(bytes32 => BorrowOrder) public orders; // Active rental orders
     mapping(bytes32 => bool) public canceledOrders; // Canceled orders
 
@@ -41,6 +48,20 @@ contract RenftMarket is EIP712 {
         revert('TODO');
     }
 
+    function listNFT(RentoutOrder calldata order) public {
+        if (order.daily_rent == 0) {
+            revert PriceGreaterThanZero();
+        }
+
+        if (nftmarket.ownerOf(order.token_id) != msg.sender) {
+            revert MustBeTheOwner();
+        }
+
+        nftmarket.safeTransferFrom(msg.sender, address(this), order.token_id);
+        NFTs[order.token_id] = order;
+
+        emit NFTListed(order.token_id, msg.sender, order.daily_rent);
+    }
     /**
      * 1. When canceling an order, ensure the cancellation is recorded on-chain to prevent the order from being reused.
      * 2. DOS Protection: Canceling an order should incur a cost to prevent spamming.
