@@ -59,14 +59,15 @@ contract RenftMarket is EIP712 {
         if (msg.value >= order.min_collateral) {
             revert NotEnoughCollateral();
         }
-        if (canceledOrders[orderHash]) {
-            revert OrderNotListed();
-        }
 
         bytes32 orderdHash = orderHash(order);
         address signer = ECDSA.recover(orderdHash, makerSignature);
         if (signer != order.maker) {
             revert InvalidSignature();
+        }
+
+        if (canceledOrders[orderdHash]) {
+            revert OrderNotListed();
         }
 
         nftmarket.safeTransferFrom(msg.sender, order.maker, order.token_id);
@@ -114,8 +115,8 @@ contract RenftMarket is EIP712 {
         emit OrderCanceled(order.maker, orderdHash);
     }
 
-    function returnNFT(bytes32 orderHash) external {
-        BorrowOrder storage order = orders[orderHash];
+    function returnNFT(bytes32 orderdHash) external {
+        BorrowOrder storage order = orders[orderdHash];
         require(msg.sender == order.taker, 'Not renter');
 
         // calcaute rent price
@@ -128,7 +129,7 @@ contract RenftMarket is EIP712 {
         // transfer nft back
         nftmarket.safeTransferFrom(address(this), order.rentinfo.maker, order.rentinfo.token_id);
 
-        delete orders[orderHash];
+        delete orders[orderdHash];
     }
 
     // Compute the order hash
