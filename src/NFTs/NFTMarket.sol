@@ -211,4 +211,20 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
 
         emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
     }
+
+    // verify signed listing
+    function verifySignedListing(
+        uint256 tokenId,
+        uint256 price,
+        uint256 deadline,
+        bytes memory signature
+    ) public view returns (bool isValid, address signer) {
+        if (deadline < block.timestamp) return (false, address(0));
+
+        bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(address(this), tokenId, price, deadline, block.chainid));
+        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
+        address theSigner = ethSignedWithSenderAndToken.recover(signature);
+
+        return (theSigner == nftmarket.ownerOf(tokenId), theSigner);
+    }
 }
