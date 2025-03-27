@@ -28,6 +28,17 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
         uint256 price;
     }
     mapping(uint256 => NFT) public nfts;
+    struct SellOrder {
+        address seller;
+        address nft;
+        uint256 tokenId;
+        address payToken;
+        uint256 price;
+        uint256 deadline;
+    }
+    mapping(bytes32 => SellOrder) public listingOrders; // orderId -> order book
+    // a mapping to record the latest nonce for each NFT
+    mapping(uint256 => uint256) public tokenNonces;
 
     error PriceGreaterThanZero();
     error MustBeTheOwner();
@@ -43,9 +54,20 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
     error NotSignedByWhitelist();
     error InvalidWhitelistSigner();
 
+    error SignatureExpired();
+    error NotApproved();
+
     event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
     event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
     event NFTSold(address indexed seller, address indexed buyer, uint256 price);
+    event NFTListedWithSignature(
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price,
+        uint256 deadline,
+        bytes signature,
+        bool isValid
+    );
 
     constructor(address initialOwner, address _nft, address _token) Ownable(initialOwner) {
         nftmarket = IERC721(_nft);
@@ -174,5 +196,19 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
             revert InvalidWhitelistSigner();
         }
         whitelistSigner = _whitelistSigner;
+    }
+
+    function listWithSignature(uint256 tokenId, uint256 price, uint256 deadline, bytes memory signature) external {
+        if (deadline < block.timestamp) revert SignatureExpired();
+        if (price == 0) revert PriceGreaterThanZero();
+
+        bytes32 messageWithSenderAndToken = keccak256(
+            abi.encodePacked(address(this), tokenId, price, deadline, tokenNonces[tokenId], block.chainid)
+        );
+        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
+        address theSigner = ethSignedWithSenderAndToken.recover(signature);
+        tokenNonces[tokenId]++;
+
+        emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
     }
 }
