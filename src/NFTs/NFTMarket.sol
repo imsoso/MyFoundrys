@@ -11,13 +11,15 @@ import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
+import { EIP712 } from '@openzeppelin/contracts/utils/cryptography/EIP712.sol';
 
-contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
+contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
     IERC20 public immutable token;
     IERC721 public immutable nftmarket;
+    address public constant ETH_FLAG = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     address public whitelistSigner;
     IERC20Permit public immutable tokenPermit;
@@ -37,8 +39,6 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
         uint256 deadline;
     }
     mapping(bytes32 => SellOrder) public listingOrders; // orderId -> order book
-    // a mapping to record the latest nonce for each NFT
-    mapping(uint256 => uint256) public tokenNonces;
 
     error PriceGreaterThanZero();
     error MustBeTheOwner();
@@ -55,7 +55,9 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
     error InvalidWhitelistSigner();
 
     error SignatureExpired();
-    error NotApproved();
+    error InvalidPayToken();
+    error OrderAleardyListed();
+    error InvalidSignature();
 
     event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
     event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
@@ -69,7 +71,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
         bool isValid
     );
 
-    constructor(address initialOwner, address _nft, address _token) Ownable(initialOwner) {
+    constructor(address initialOwner, address _nft, address _token) Ownable(initialOwner) EIP712('NFTMarket', '1') {
         nftmarket = IERC721(_nft);
         token = IERC20(_token);
 
@@ -198,17 +200,40 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable {
         whitelistSigner = _whitelistSigner;
     }
 
-    function listWithSignature(uint256 tokenId, uint256 price, uint256 deadline, bytes memory signature) external {
+    function listWithSignature(uint256 tokenId, address payToken, uint256 price, uint256 deadline, bytes memory signature) external {
         if (deadline < block.timestamp) revert SignatureExpired();
         if (price == 0) revert PriceGreaterThanZero();
+        if (payToken != ETH_FLAG && IERC20(payToken).totalSupply() == 0) {
+            revert InvalidPayToken();
+        }
 
-        bytes32 messageWithSenderAndToken = keccak256(
-            abi.encodePacked(address(this), tokenId, price, deadline, tokenNonces[tokenId], block.chainid)
-        );
-        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
-        address theSigner = ethSignedWithSenderAndToken.recover(signature);
-        tokenNonces[tokenId]++;
+        SellOrder memory theOrder = SellOrder({
+            seller: msg.sender,
+            tokenId: tokenId,
+            payToken: payToken,
+            price: price,
+            deadline: deadline
+        });
 
+        bytes32 hashedOrder = keccak256(abi.encode(theOrder));
+        // safe check repeat list
+        if (listingOrders[hashedOrder].seller != address(0)) {
+            revert OrderAleardyListed();
+        }
+
+        bytes32 digest;
+
+        if (theOrder.payToken == ETH_FLAG) {
+            digest = MessageHashUtils.toEthSignedMessageHash(hashedOrder);
+        } else {
+            digest = _hashTypedDataV4(hashedOrder);
+        }
+        address theSigner = ECDSA.recover(digest, signature);
+        if (theSigner != msg.sender) {
+            revert InvalidSignature();
+        }
+
+        listingOrders[hashedOrder] = theOrder;
         emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
     }
 
