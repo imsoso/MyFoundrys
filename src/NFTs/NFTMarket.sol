@@ -38,7 +38,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         uint256 price;
         uint256 deadline;
     }
-    mapping(bytes32 => SellOrder) public listingOrders; // orderId -> order book
+    mapping(uint256 => SellOrder) public listingOrders; // tokenID -> order book
 
     error PriceGreaterThanZero();
     error MustBeTheOwner();
@@ -217,7 +217,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
 
         bytes32 hashedOrder = keccak256(abi.encode(theOrder));
         // safe check repeat list
-        if (listingOrders[hashedOrder].seller != address(0)) {
+        if (listingOrders[tokenId].seller != address(0)) {
             revert OrderAleardyListed();
         }
 
@@ -233,7 +233,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
             revert InvalidSignature();
         }
 
-        listingOrders[hashedOrder] = theOrder;
+        listingOrders[tokenId] = theOrder;
         emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
     }
 
