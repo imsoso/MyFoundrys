@@ -58,6 +58,8 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
     error InvalidPayToken();
     error OrderAleardyListed();
     error InvalidSignature();
+    error NotEnoughETH();
+    error IncorrectETHAmount();
 
     event WhitelistBuy(uint256 indexed tokenId, address indexed buyer, uint256 price);
     event NFTListed(uint256 indexed tokenId, address indexed seller, uint256 price);
@@ -95,7 +97,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         emit NFTListed(tokenID, msg.sender, price);
     }
 
-    function buyNFT(address buyer, uint tokenID) public nonReentrant {
+    function buyNFT(address buyer, uint tokenID) public payable nonReentrant {
         NFT memory theNFT = nfts[tokenID];
         // check own buyer
         if (theNFT.seller == buyer) {
@@ -191,6 +193,41 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         buyNFT(msg.sender, tokenID);
 
         emit WhitelistBuy(tokenID, msg.sender, price);
+    }
+
+    function buyWithETH(uint256 tokenID) external payable {
+        SellOrder memory theOrder = listingOrders[tokenID];
+        NFT memory theNFT = nfts[tokenID];
+
+        address buyer = msg.sender;
+
+        // check own buyer
+        if (theNFT.seller == buyer) {
+            revert MustNotBeTheOwner();
+        }
+
+        if (theNFT.seller == address(0)) {
+            revert NFTNotListed();
+        }
+
+        if (theOrder.payToken == ETH_FLAG) {
+            if (msg.value != theOrder.price) {
+                revert NotEnoughETH();
+            }
+        } else {
+            if (msg.value != 0) {
+                revert IncorrectETHAmount();
+            }
+        }
+
+        // transfer nft to buyer
+        nftmarket.transferFrom(address(this), buyer, tokenID);
+
+        // delete nft
+        delete nfts[tokenID];
+        delete listingOrders[tokenID];
+
+        emit NFTSold(theNFT.seller, buyer, theNFT.price);
     }
 
     function setWhitelistSigner(address _whitelistSigner) external onlyOwner {
