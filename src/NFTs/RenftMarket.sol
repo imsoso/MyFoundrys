@@ -103,9 +103,11 @@ contract RenftMarket is EIP712 {
      * 2. DOS Protection: Canceling an order should incur a cost to prevent spamming.
      */
     function cancelOrder(RentoutOrder calldata order, bytes calldata makerSignatre) external payable {
-        if (NFTs[order.token_id].token_id == 0) {
+        if (NFTs[order.token_id].maker == address(0)) {
             revert OrderNotListed();
         }
+
+        require(msg.value >= cancelFee, 'Insufficient cancel fee');
 
         if (order.nonce != nonces[order.maker]) {
             revert InvalidNonce();
