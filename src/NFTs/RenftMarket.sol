@@ -77,7 +77,7 @@ contract RenftMarket is EIP712 {
         orders[orderdHash] = BorrowOrder(msg.sender, msg.value, block.timestamp, order);
 
         delete NFTs[order.token_id];
-        emit BorrowNFT(order.maker, msg.sender, orderdHash, msg.value);
+        emit BorrowNFT(msg.sender, order.maker, orderdHash, msg.value);
     }
 
     function listNFT(RentoutOrder calldata order) public {
