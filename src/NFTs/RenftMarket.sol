@@ -152,6 +152,10 @@ contract RenftMarket is EIP712 {
         return _hashTypedDataV4(structHash);
     }
 
+    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+        return this.onERC721Received.selector;
+    }
+
     struct RentoutOrder {
         address maker; // Lender's address
         address nft_ca; // NFT contract address
