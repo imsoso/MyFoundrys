@@ -73,8 +73,7 @@ contract RenftMarket is EIP712 {
         if (canceledOrders[orderdHash]) {
             revert OrderNotListed();
         }
-
-        nftmarket.safeTransferFrom(msg.sender, order.maker, order.token_id);
+        nftmarket.safeTransferFrom(order.maker, address(this), order.token_id);
         orders[orderdHash] = BorrowOrder(msg.sender, msg.value, block.timestamp, order);
 
         delete NFTs[order.token_id];
