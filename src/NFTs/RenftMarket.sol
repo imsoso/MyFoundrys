@@ -31,6 +31,7 @@ contract RenftMarket is EIP712 {
     error InvalidSignature();
     error OrderNotListed();
     error InsufficientCancelFee();
+    error InvalidNonce();
 
     IERC721 public immutable nftmarket;
     uint256 public cancelFee = 0.001 ether; // default cancel fee
@@ -44,7 +45,7 @@ contract RenftMarket is EIP712 {
     mapping(uint256 => RentoutOrder) public NFTs; // listed NFTs
     mapping(bytes32 => BorrowOrder) public orders; // Active rental orders
     mapping(bytes32 => bool) public canceledOrders; // Canceled orders
-
+    mapping(address => uint256) public nonces;
     constructor() EIP712('RenftMarket', '1') {}
 
     /**
@@ -58,6 +59,9 @@ contract RenftMarket is EIP712 {
 
         if (msg.value >= order.min_collateral) {
             revert NotEnoughCollateral();
+        }
+        if (order.nonce != nonces[order.maker]) {
+            revert InvalidNonce();
         }
 
         bytes32 orderdHash = orderHash(order);
@@ -86,6 +90,10 @@ contract RenftMarket is EIP712 {
             revert MustBeTheOwner();
         }
 
+        if (order.nonce != nonces[msg.sender]) {
+            revert InvalidNonce();
+        }
+
         nftmarket.safeTransferFrom(msg.sender, address(this), order.token_id);
         NFTs[order.token_id] = order;
 
@@ -98,6 +106,10 @@ contract RenftMarket is EIP712 {
     function cancelOrder(RentoutOrder calldata order, bytes calldata makerSignatre) external payable {
         if (NFTs[order.token_id].token_id == 0) {
             revert OrderNotListed();
+        }
+
+        if (order.nonce != nonces[order.maker]) {
+            revert InvalidNonce();
         }
 
         bytes32 orderdHash = orderHash(order);
@@ -144,7 +156,8 @@ contract RenftMarket is EIP712 {
                 order.daily_rent,
                 order.max_rental_duration,
                 order.min_collateral,
-                order.list_endtime
+                order.list_endtime,
+                order.nonce
             )
         );
 
@@ -164,6 +177,7 @@ contract RenftMarket is EIP712 {
         uint256 max_rental_duration; // Maximum rental duration
         uint256 min_collateral; // Minimum required collateral
         uint256 list_endtime; // Listing expiration time
+        uint256 nonce; // each maker nonce
     }
 
     // Rental order details
