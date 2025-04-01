@@ -170,8 +170,11 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         bytes32 s,
         bytes memory whitelistSignature
     ) external {
-        NFT memory theNFT = nfts[tokenID];
+        if (deadline < block.timestamp) {
+            revert SignatureExpired();
+        }
 
+        NFT memory theNFT = nfts[tokenID];
         if (theNFT.seller == address(0)) {
             revert NFTNotListed();
         }
