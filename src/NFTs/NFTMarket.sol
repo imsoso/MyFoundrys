@@ -130,7 +130,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         emit NFTSold(theNFT.seller, buyer, theNFT.price);
     }
 
-    function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
+    function tokensReceived(address from, uint256 amount, bytes calldata userData) internal {
         if (msg.sender != address(token)) {
             revert NotERC20Contract();
         }
