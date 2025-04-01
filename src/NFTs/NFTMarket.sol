@@ -150,7 +150,7 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
             revert TokenTransferFailed();
         }
 
-        nftmarket.safeTransferFrom(msg.sender, from, tokenId);
+        nftmarket.safeTransferFrom(address(this), from, tokenId);
         delete nfts[tokenId];
 
         emit NFTSold(theNFT.seller, msg.sender, theNFT.price);
