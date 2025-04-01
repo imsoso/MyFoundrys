@@ -133,8 +133,11 @@ contract RenftMarket is EIP712 {
         // calcaute rent price
         uint256 rentedDays = (block.timestamp - order.start_time) / 1 days;
         uint256 totalRent = rentedDays * order.rentinfo.daily_rent;
+        require(order.collateral >= totalRent, 'Insufficient collateral');
 
-        // return rest collateral
+        // pay rent
+        payable(order.rentinfo.maker).transfer(totalRent);
+        // retrun rest collateral
         payable(order.taker).transfer(order.collateral - totalRent);
 
         // transfer nft back
