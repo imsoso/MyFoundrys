@@ -25,7 +25,6 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
     IERC20Permit public immutable tokenPermit;
 
     struct NFT {
-        // uint256 tokenId;
         address seller;
         uint256 price;
     }
