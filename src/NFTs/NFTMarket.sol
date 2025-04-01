@@ -90,6 +90,10 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
             revert MustBeTheOwner();
         }
 
+        if (nfts[tokenID].seller != address(0)) {
+            revert OrderAleardyListed();
+        }
+
         nftmarket.safeTransferFrom(msg.sender, address(this), tokenID);
         nfts[tokenID] = NFT(msg.sender, price);
 
@@ -241,6 +245,10 @@ contract NFTMarket is IERC721Receiver, ReentrancyGuard, Ownable, EIP712 {
         if (price == 0) revert PriceGreaterThanZero();
         if (payToken != ETH_FLAG && IERC20(payToken).totalSupply() == 0) {
             revert InvalidPayToken();
+        }
+
+        if (listingOrders[tokenId].seller != address(0)) {
+            revert OrderAleardyListed();
         }
 
         SellOrder memory theOrder = SellOrder({
