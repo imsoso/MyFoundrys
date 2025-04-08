@@ -22,6 +22,13 @@ contract MyIDO {
     error ReachMaxFunding();
     error FailedToSendETH();
 
+    // Event emitted when a user contributes to a campaign
+    event Presale(address indexed user, uint256 amount);
+    // Event emitted when a user claims their tokens
+    event TokenClaim(address indexed user, ERC20 token, uint256 amount);
+    event Refund(address indexed user, uint256 amount);
+    event TeamWithdrawFunds(address indexed user, uint256 amount);
+
     modifier onlyActive() {
         require(block.timestamp < deploymentTimestamp + preSaleDuration, 'Project has ended');
         require(currentTotalFunding + msg.value < maxFunding, 'Funding limit reached');
@@ -70,16 +77,20 @@ contract MyIDO {
         }
 
         balances[msg.sender] += msg.value;
+
+        emit Presale(msg.sender, msg.value);
     }
 
     function claimTokens() public onlySuccess {
         if (balances[msg.sender] == 0) {
             revert InsuffientFund();
         }
-        
+
         uint256 avaliableTokens = balances[msg.sender] / preSalePrice;
         balances[msg.sender] = 0;
         token.transfer(msg.sender, avaliableTokens);
+
+        emit TokenClaim(msg.sender, token, avaliableTokens);
     }
 
     function withdraw() public onlySuccess onlyOwner {
@@ -89,6 +100,8 @@ contract MyIDO {
         if (!sent) {
             revert FailedToSendETH();
         }
+
+        emit TeamWithdrawFunds(msg.sender, amountToTeam);
     }
 
     function refund() public onlyFailed {
@@ -102,5 +115,7 @@ contract MyIDO {
             revert FailedToSendETH();
         }
         balances[msg.sender] = 0;
+
+        emit Refund(msg.sender, amountToRefund);
     }
 }
