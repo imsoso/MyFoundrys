@@ -16,6 +16,11 @@ contract MyIDO {
     uint256 deploymentTimestamp; // Use to record contract deployment time
     uint256 preSaleDuration; // Campaign duration in seconds
 
+    mapping(address => uint256) public balances; // user address -> balance
+
+    error InsuffientFund();
+    error ReachMaxFunding();
+
     modifier onlyActive() {
         require(block.timestamp < deploymentTimestamp + preSaleDuration, 'Project has ended');
         require(currentTotalFunding + msg.value < maxFunding, 'Funding limit reached');
@@ -37,5 +42,17 @@ contract MyIDO {
         deploymentTimestamp = block.timestamp;
         preSaleDuration = _preSaleDuration;
         totalSupply = _totalSupply;
+    }
+
+    function presale() public payable onlyActive {
+        if (msg.value < minFunding) {
+            revert InsuffientFund();
+        }
+
+        if ((balances[msg.sender] - msg.value) > maxFunding) {
+            revert ReachMaxFunding();
+        }
+
+        balances[msg.sender] += msg.value;
     }
 }
