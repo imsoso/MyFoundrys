@@ -26,6 +26,11 @@ contract MyIDO {
         require(currentTotalFunding + msg.value < maxFunding, 'Funding limit reached');
         _;
     }
+
+    modifier onlySuccess() {
+        require(currentTotalFunding >= minFunding, 'Funding target not reached');
+        _;
+    }
     constructor(
         ERC20 _token,
         uint256 _preSalePrice,
@@ -54,5 +59,15 @@ contract MyIDO {
         }
 
         balances[msg.sender] += msg.value;
+    }
+
+    function claimTokens() public onlySuccess {
+        if (balances[msg.sender] == 0) {
+            revert InsuffientFund();
+        }
+        
+        uint256 avaliableTokens = balances[msg.sender] / preSalePrice;
+        balances[msg.sender] = 0;
+        token.transfer(msg.sender, avaliableTokens);
     }
 }
