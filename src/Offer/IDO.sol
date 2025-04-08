@@ -38,6 +38,10 @@ contract MyIDO {
         _;
     }
 
+    modifier onlyFailed() {
+        require(currentTotalFunding < minFunding, 'Cannot do it, Funding target reached');
+        _;
+    }
     constructor(
         ERC20 _token,
         uint256 _preSalePrice,
@@ -85,5 +89,18 @@ contract MyIDO {
         if (!sent) {
             revert FailedToSendETH();
         }
+    }
+
+    function refund() public onlyFailed {
+        if (balances[msg.sender] == 0) {
+            revert InsuffientFund();
+        }
+
+        uint amountToRefund = balances[msg.sender];
+        (bool sent, ) = owner.call{ value: amountToRefund }('');
+        if (!sent) {
+            revert FailedToSendETH();
+        }
+        balances[msg.sender] = 0;
     }
 }
