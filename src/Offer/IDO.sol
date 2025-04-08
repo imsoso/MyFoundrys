@@ -113,7 +113,7 @@ contract MyIDO {
         }
 
         uint amountToRefund = balances[msg.sender];
-        (bool sent, ) = owner.call{ value: amountToRefund }('');
+        (bool sent, ) = msg.sender.call{ value: amountToRefund }('');
         if (!sent) {
             revert FailedToSendETH();
         }
