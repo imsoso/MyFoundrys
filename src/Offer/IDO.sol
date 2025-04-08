@@ -20,6 +20,7 @@ contract MyIDO {
 
     error InsuffientFund();
     error ReachMaxFunding();
+    error FailedToSendETH();
 
     modifier onlyActive() {
         require(block.timestamp < deploymentTimestamp + preSaleDuration, 'Project has ended');
@@ -31,6 +32,12 @@ contract MyIDO {
         require(currentTotalFunding >= minFunding, 'Funding target not reached');
         _;
     }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, 'Only owner');
+        _;
+    }
+
     constructor(
         ERC20 _token,
         uint256 _preSalePrice,
@@ -69,5 +76,14 @@ contract MyIDO {
         uint256 avaliableTokens = balances[msg.sender] / preSalePrice;
         balances[msg.sender] = 0;
         token.transfer(msg.sender, avaliableTokens);
+    }
+
+    function withdraw() public onlySuccess onlyOwner {
+        uint256 totalEth = address(this).balance;
+        uint amountToTeam = totalEth / 10;
+        (bool sent, ) = owner.call{ value: amountToTeam }('');
+        if (!sent) {
+            revert FailedToSendETH();
+        }
     }
 }
