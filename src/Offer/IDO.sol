@@ -21,7 +21,6 @@ contract MyIDO {
     mapping(address => uint256) public balances; // user address -> balance
 
     error InsuffientFund();
-    error ReachMaxFunding();
     error FailedToSendETH();
 
     // Event emitted when a user contributes to a campaign
@@ -72,10 +71,6 @@ contract MyIDO {
     function presale() public payable onlyActive {
         if (msg.value < minContribution) {
             revert InsuffientFund();
-        }
-
-        if ((balances[msg.sender] - msg.value) > maxFunding) {
-            revert ReachMaxFunding();
         }
 
         balances[msg.sender] += msg.value;
