@@ -12,6 +12,8 @@ contract MyIDO {
     uint256 maxFunding; // Maximum fundraising amount in ETH
     uint256 public currentTotalFunding;
     uint256 totalSupply;
+    uint256 minContribution = 0.01 ether;
+    uint256 maxContribution = 0.1 ether;
 
     uint256 deploymentTimestamp; // Use to record contract deployment time
     uint256 preSaleDuration; // Campaign duration in seconds
@@ -68,7 +70,7 @@ contract MyIDO {
     }
 
     function presale() public payable onlyActive {
-        if (msg.value < minFunding) {
+        if (msg.value < minContribution) {
             revert InsuffientFund();
         }
 
@@ -77,6 +79,7 @@ contract MyIDO {
         }
 
         balances[msg.sender] += msg.value;
+        currentTotalFunding += msg.value;
 
         emit Presale(msg.sender, msg.value);
     }
