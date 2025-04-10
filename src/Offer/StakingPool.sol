@@ -15,11 +15,28 @@ contract StakingPool {
         uint256 lastUpdateTime;
     }
     mapping(address => StakeInfo) public stakeInfos;
+
+    error AmountMustGreaterThanZero();
+
     constructor(address _esRNTToken, address _RNTToken) {
         esRNTToken = esRNT(_esRNTToken);
         RNTToken = SoToken(_RNTToken);
     }
 
+    // User can stake their RNT to get rewards
+    function stake(uint256 amount) external view {
+        if (amount == 0) {
+            revert AmountMustGreaterThanZero();
+        }
+
+        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+        stakeInfo.unclaimed += getRewardAmount(msg.sender);
+        // Stacked must calculate after getRewardAmount is called
+        // because it base on the old staked amount
+
+        stakeInfo.staked += amount;
+        stakeInfo.lastUpdateTime = block.timestamp;
+    }
     // calculate the reward amount for the user
     // user | Staked | Unclaimed| Lastupdatetime|Action
     // Alice|10|0|10:00|Stake
@@ -31,3 +48,4 @@ contract StakingPool {
         uint256 pendingRewards = (stakeInfos[user].staked * (block.timestamp - stakeInfos[user].lastUpdateTime)) / DAY_IN_SECONDS;
         return pendingRewards;
     }
+}
