@@ -37,6 +37,20 @@ contract StakingPool {
         stakeInfo.staked += amount;
         stakeInfo.lastUpdateTime = block.timestamp;
     }
+
+    function unstake(uint256 amount) external view {
+        if (amount == 0) {
+            revert AmountMustGreaterThanZero();
+        }
+        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+
+        // We still calculate reward amount for the user
+        // because time elapsed before unstake
+        stakeInfo.unclaimed += getRewardAmount(msg.sender);
+        stakeInfo.staked -= amount;
+        stakeInfo.lastUpdateTime = block.timestamp;
+    }
+
     // calculate the reward amount for the user
     // user | Staked | Unclaimed| Lastupdatetime|Action
     // Alice|10|0|10:00|Stake
