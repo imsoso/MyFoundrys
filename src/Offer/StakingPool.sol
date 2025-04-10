@@ -51,6 +51,17 @@ contract StakingPool {
         stakeInfo.lastUpdateTime = block.timestamp;
     }
 
+    function claim() external {
+        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+        uint256 rewardAmount = stakeInfo.unclaimed;
+
+        if (rewardAmount == 0) {
+            revert AmountMustGreaterThanZero();
+        }
+
+        stakeInfo.unclaimed -= rewardAmount;
+        esRNTToken.transfer(msg.sender, rewardAmount);
+    }
     // calculate the reward amount for the user
     // user | Staked | Unclaimed| Lastupdatetime|Action
     // Alice|10|0|10:00|Stake
