@@ -9,6 +9,7 @@ import './ERC20WithPermit.sol';
 
 contract esRNT is ERC20, ERC20Burnable, Ownable {
     SoToken public RNTToken;
+    uint256 public constant MONTH_IN_SECONDS = 2592000;
 
     struct LockInfo {
         uint256 amount;
@@ -33,5 +34,22 @@ contract esRNT is ERC20, ERC20Burnable, Ownable {
             })
         );
     }
+
+    function claim(uint256 amount) public {
+        if (balanceOf(msg.sender) < amount) {
+            revert InsufficientBalance();
+        }
+
+        uint256 totalUnlocked;
+
+        for (uint256 i = 0; i < lockInfos[msg.sender].length; i++) {
+            LockInfo memory aLock = lockInfos[msg.sender][i];
+            if (aLock.amount == 0) continue;
+            uint256 unlockedAmount = (aLock.amount * (block.timestamp - aLock.lockTime)) / MONTH_IN_SECONDS;
+            totalUnlocked += unlockedAmount;
+        }
+        delete lockInfos[msg.sender];
+        RNTToken.transfer(msg.sender, totalUnlocked);
+        _burn(msg.sender, amount);
     }
 }
