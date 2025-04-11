@@ -18,6 +18,10 @@ contract StakingPool {
 
     error AmountMustGreaterThanZero();
 
+    event TokenStaked(address indexed user, uint256 amount);
+    event TokenUnStaked(address indexed user, uint256 amount);
+    event TokenClaimed(address indexed user, uint256 amount);
+
     constructor(address _esRNTToken, address _RNTToken) {
         esRNTToken = esRNT(_esRNTToken);
         RNTToken = SoToken(_RNTToken);
@@ -38,6 +42,8 @@ contract StakingPool {
         stakeInfo.lastUpdateTime = block.timestamp;
 
         RNTToken.transferFrom(msg.sender, address(this), amount);
+
+        emit TokenStaked(msg.sender, amount);
     }
 
     function unstake(uint256 amount) external {
@@ -53,6 +59,8 @@ contract StakingPool {
         stakeInfo.lastUpdateTime = block.timestamp;
 
         RNTToken.transferFrom(address(this), msg.sender, amount);
+
+        emit TokenUnStaked(msg.sender, amount);
     }
 
     function claim() external {
@@ -65,6 +73,8 @@ contract StakingPool {
 
         stakeInfo.unclaimed -= rewardAmount;
         esRNTToken.mint(msg.sender, rewardAmount);
+
+        emit TokenClaimed(msg.sender, rewardAmount);
     }
     // calculate the reward amount for the user
     // user | Staked | Unclaimed| Lastupdatetime|Action
