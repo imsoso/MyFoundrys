@@ -19,6 +19,9 @@ contract esRNT is ERC20, ERC20Burnable, Ownable {
 
     error InsufficientBalance();
 
+    event TokenLocked(address indexed user, uint256 amount, uint256 lockTime);
+    event TokenClaimed(address indexed user, uint256 amount, uint256 receivedAmount);
+
     constructor(address recipient, address initialOwner, address _RNTToken) ERC20('esRNT', 'esRNT') Ownable(initialOwner) {
         RNTToken = SoToken(_RNTToken);
         _mint(recipient, 1000000 * 10 ** decimals());
@@ -33,6 +36,7 @@ contract esRNT is ERC20, ERC20Burnable, Ownable {
                 lockTime: block.timestamp // The time at which the lock is created
             })
         );
+        emit TokenLocked(to, amount, block.timestamp);
     }
 
     function claim(uint256 amount) public {
@@ -51,5 +55,7 @@ contract esRNT is ERC20, ERC20Burnable, Ownable {
         delete lockInfos[msg.sender];
         RNTToken.transfer(msg.sender, totalUnlocked);
         _burn(msg.sender, amount);
+
+        emit TokenClaimed(msg.sender, amount, totalUnlocked);
     }
 }
