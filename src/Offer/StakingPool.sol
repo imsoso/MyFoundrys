@@ -24,7 +24,7 @@ contract StakingPool {
     }
 
     // User can stake their RNT to get rewards
-    function stake(uint256 amount) external view {
+    function stake(uint256 amount) external {
         if (amount == 0) {
             revert AmountMustGreaterThanZero();
         }
@@ -36,9 +36,11 @@ contract StakingPool {
 
         stakeInfo.staked += amount;
         stakeInfo.lastUpdateTime = block.timestamp;
+
+        RNTToken.transferFrom(msg.sender, address(this), amount);
     }
 
-    function unstake(uint256 amount) external view {
+    function unstake(uint256 amount) external {
         if (amount == 0) {
             revert AmountMustGreaterThanZero();
         }
@@ -49,6 +51,8 @@ contract StakingPool {
         stakeInfo.unclaimed += getRewardAmount(msg.sender);
         stakeInfo.staked -= amount;
         stakeInfo.lastUpdateTime = block.timestamp;
+
+        RNTToken.transferFrom(address(this), msg.sender, amount);
     }
 
     function claim() external {
