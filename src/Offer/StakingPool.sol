@@ -94,7 +94,9 @@ contract StakingPool {
     // Alice|10 + 20 + 10 -15 | 2.91 +40* 2/24 = 6.24|15:00|UnStake
     // Alice|10 + 20 + 10 -15 | 0|16:00|Claim
     function getRewardAmount(address user) public view returns (uint256) {
-        uint256 pendingRewards = (stakeInfos[user].staked * (block.timestamp - stakeInfos[user].lastUpdateTime)) / DAY_IN_SECONDS;
+        uint256 timeElapsed = block.timestamp > stakeInfos[user].lastUpdateTime ? block.timestamp - stakeInfos[user].lastUpdateTime : 0;
+
+        uint256 pendingRewards = (stakeInfos[user].staked * timeElapsed) / DAY_IN_SECONDS;
         return pendingRewards;
     }
 }
