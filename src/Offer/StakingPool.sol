@@ -33,7 +33,7 @@ contract StakingPool {
             revert AmountMustGreaterThanZero();
         }
 
-        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+        StakeInfo storage stakeInfo = stakeInfos[msg.sender];
         stakeInfo.unclaimed += getRewardAmount(msg.sender);
         // Stacked must calculate after getRewardAmount is called
         // because it base on the old staked amount
@@ -50,7 +50,7 @@ contract StakingPool {
         if (amount == 0) {
             revert AmountMustGreaterThanZero();
         }
-        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+        StakeInfo storage stakeInfo = stakeInfos[msg.sender];
 
         // We still calculate reward amount for the user
         // because time elapsed before unstake
@@ -64,7 +64,7 @@ contract StakingPool {
     }
 
     function claim() external {
-        StakeInfo memory stakeInfo = stakeInfos[msg.sender];
+        StakeInfo storage stakeInfo = stakeInfos[msg.sender];
         uint256 rewardAmount = stakeInfo.unclaimed;
 
         if (rewardAmount == 0) {
