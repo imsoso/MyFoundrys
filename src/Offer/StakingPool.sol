@@ -52,13 +52,17 @@ contract StakingPool {
             revert AmountMustGreaterThanZero();
         }
         StakeInfo storage stakeInfo = stakeInfos[msg.sender];
-        if (info.staked < amount) {
+        if (stakeInfo.staked < amount) {
             revert InsufficientStake();
         }
 
         // We still calculate reward amount for the user
         // because time elapsed before unstake
         stakeInfo.unclaimed += getRewardAmount(msg.sender);
+
+        if (stakeInfo.staked < amount) {
+            revert InsufficientStake();
+        }
         stakeInfo.staked -= amount;
         stakeInfo.lastUpdateTime = block.timestamp;
 
