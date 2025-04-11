@@ -17,6 +17,7 @@ contract StakingPool {
     mapping(address => StakeInfo) public stakeInfos;
 
     error AmountMustGreaterThanZero();
+    error InsufficientStake();
 
     event TokenStaked(address indexed user, uint256 amount);
     event TokenUnStaked(address indexed user, uint256 amount);
@@ -51,6 +52,9 @@ contract StakingPool {
             revert AmountMustGreaterThanZero();
         }
         StakeInfo storage stakeInfo = stakeInfos[msg.sender];
+        if (info.staked < amount) {
+            revert InsufficientStake();
+        }
 
         // We still calculate reward amount for the user
         // because time elapsed before unstake
