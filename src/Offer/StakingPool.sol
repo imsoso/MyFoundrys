@@ -79,7 +79,9 @@ contract StakingPool {
             revert AmountMustGreaterThanZero();
         }
 
-        stakeInfo.unclaimed -= rewardAmount;
+        stakeInfo.unclaimed = 0;
+        stakeInfo.lastUpdateTime = block.timestamp;
+
         esRNTToken.mint(msg.sender, rewardAmount);
 
         emit TokenClaimed(msg.sender, rewardAmount);
