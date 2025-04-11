@@ -64,7 +64,7 @@ contract StakingPool {
         }
 
         stakeInfo.unclaimed -= rewardAmount;
-        esRNTToken.transfer(msg.sender, rewardAmount);
+        esRNTToken.mint(msg.sender, rewardAmount);
     }
     // calculate the reward amount for the user
     // user | Staked | Unclaimed| Lastupdatetime|Action
