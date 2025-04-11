@@ -42,7 +42,7 @@ contract StakingPool {
         stakeInfo.staked += amount;
         stakeInfo.lastUpdateTime = block.timestamp;
 
-        RNTToken.transferFrom(msg.sender, address(this), amount);
+        RNTToken.transfer(address(this), amount);
 
         emit TokenStaked(msg.sender, amount);
     }
