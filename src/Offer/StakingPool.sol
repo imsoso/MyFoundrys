@@ -59,14 +59,10 @@ contract StakingPool {
         // We still calculate reward amount for the user
         // because time elapsed before unstake
         stakeInfo.unclaimed += getRewardAmount(msg.sender);
-
-        if (stakeInfo.staked < amount) {
-            revert InsufficientStake();
-        }
         stakeInfo.staked -= amount;
         stakeInfo.lastUpdateTime = block.timestamp;
 
-        RNTToken.transferFrom(address(this), msg.sender, amount);
+        RNTToken.transfer(msg.sender, amount);
 
         emit TokenUnStaked(msg.sender, amount);
     }
