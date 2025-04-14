@@ -50,4 +50,29 @@ contract StakingPoolTest is Test {
 
         assertEq(staked, amount);
     }
+
+    function testUnstake() public {
+        uint amount = 100 * 10 ** 18;
+        // User transfers tokens directly to the pool first
+        vm.prank(user);
+        RNTToken.approve(address(stakingPool), amount);
+
+        // Then user calls stake to record the action
+        vm.startPrank(user); // Prank again as transfer consumes the prank
+        stakingPool.stake(amount);
+
+        // Unstake the tokens
+        stakingPool.unstake(amount);
+        vm.stopPrank();
+
+        // Check the User's balance
+        assertEq(RNTToken.balanceOf(address(user)), amount);
+
+        // Check the StakingPool's balance
+        assertEq(RNTToken.balanceOf(address(stakingPool)), 0);
+
+        // Check the user's stake info
+        (uint256 staked, , ) = stakingPool.stakeInfos(user);
+        assertEq(staked, 0);
+    }
 }
