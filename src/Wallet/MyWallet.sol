@@ -7,18 +7,27 @@ contract MyWallet {
     address public owner;
 
     modifier auth() {
-        require(msg.sender == owner, 'Not authorized');
+        // temp variable
+        address currentOwner;
+        assembly {
+            currentOwner := sload(2)
+        }
+        require(msg.sender == currentOwner, 'Not authorized');
         _;
     }
 
     constructor(string memory _name) {
         name = _name;
-        owner = msg.sender;
+        assembly {
+            sstore(2, msg.sender)
+        }
     }
 
     function transferOwernship(address _addr) external auth {
         require(_addr != address(0), 'New owner is the zero address');
         require(owner != _addr, 'New owner is the same as the old owner');
-        owner = _addr;
+        assembly {
+            sstore(2, _addr)
+        }
     }
 }
