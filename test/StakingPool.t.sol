@@ -13,6 +13,8 @@ contract StakingPoolTest is Test {
     address public user;
     StakingPool public stakingPool;
 
+    uint256 public constant DAY_IN_SECONDS = 86400;
+
     struct StakeInfo {
         uint256 staked;
         uint256 unclaimed;
@@ -27,6 +29,8 @@ contract StakingPoolTest is Test {
         esRNTToken = new esRNT(owner, owner, address(RNTToken));
         stakingPool = new StakingPool(address(esRNTToken), address(RNTToken));
 
+        // Owner grants mint permission to a trusted address
+        esRNTToken.grantRole(esRNTToken.MINTER_ROLE(), address(stakingPool));
         // Mint tokens to the user
         RNTToken.mint(user, 100 * 10 ** 18);
     }
@@ -74,5 +78,27 @@ contract StakingPoolTest is Test {
         // Check the user's stake info
         (uint256 staked, , ) = stakingPool.stakeInfos(user);
         assertEq(staked, 0);
+    }
+
+    function testClaimReward() public {
+        // Stake
+        uint amount = 100 * 10 ** 18;
+        vm.startPrank(user);
+        RNTToken.approve(address(stakingPool), amount);
+        stakingPool.stake(amount);
+        vm.stopPrank();
+
+        // 2 days later
+        vm.warp(block.timestamp + DAY_IN_SECONDS * 2);
+
+        // Claim the reward
+        vm.prank(user);
+        stakingPool.claim();
+
+        // Check the user's balance
+        assertEq(esRNTToken.balanceOf(address(user)), 200 * 10 ** 18);
+
+        // Check the StakingPool's balance
+        // assertEq(RNTToken.balanceOf(address(esRNTToken)), 0);
     }
 }
