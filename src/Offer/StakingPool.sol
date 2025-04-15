@@ -69,6 +69,8 @@ contract StakingPool {
 
     function claim() external {
         StakeInfo storage stakeInfo = stakeInfos[msg.sender];
+        stakeInfo.unclaimed += getRewardAmount(msg.sender);
+
         uint256 rewardAmount = stakeInfo.unclaimed;
 
         if (rewardAmount == 0) {
