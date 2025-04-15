@@ -6,10 +6,12 @@ import { ERC20 } from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import { ERC20Burnable } from '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import './ERC20WithPermit.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 
-contract esRNT is ERC20, ERC20Burnable, Ownable {
+contract esRNT is ERC20, ERC20Burnable, Ownable, AccessControl {
     SoToken public RNTToken;
     uint256 public constant MONTH_IN_SECONDS = 2592000;
+    bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
     struct LockInfo {
         uint256 amount;
@@ -25,9 +27,11 @@ contract esRNT is ERC20, ERC20Burnable, Ownable {
     constructor(address recipient, address initialOwner, address _RNTToken) ERC20('esRNT', 'esRNT') Ownable(initialOwner) {
         RNTToken = SoToken(_RNTToken);
         _mint(recipient, 1000000 * 10 ** decimals());
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
 
-    function mint(address to, uint256 amount) public onlyOwner {
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(to, amount);
         // Add a new lock entry for the recipient with the specified amount and the current timestamp as the lock time
         lockInfos[to].push(
