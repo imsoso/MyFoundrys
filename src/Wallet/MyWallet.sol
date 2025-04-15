@@ -19,7 +19,7 @@ contract MyWallet {
     constructor(string memory _name) {
         name = _name;
         assembly {
-            sstore(2, msg.sender)
+            sstore(2, caller())
         }
     }
 
