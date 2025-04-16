@@ -13,3 +13,5 @@ lib/
 
 # Dotenv file
 .env
+src/Assembly/ContractReader.sol
+src/Assembly/LockReader.sol
