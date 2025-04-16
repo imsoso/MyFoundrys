@@ -3,11 +3,11 @@
 pragma solidity ^0.8.28;
 contract esRNT {
     struct LockInfo {
-        address user; // 20 bytes
-        uint64 startTime; // slot A: user（20 bytes）+ startTime（8 bytes）
-        uint256 amount; // slot B: amount（uint256）
+        address user;
+        uint64 startTime;
+        uint256 amount;
     }
-    LockInfo[] private _locks; // _locks.length : slot 0, _locks[i] start from  slot keccak256(0)
+    LockInfo[] private _locks;
 
     constructor() {
         for (uint256 i = 0; i < 11; i++) {
