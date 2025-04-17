@@ -6,7 +6,7 @@ import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol';
 import { UUPSUpgradeable } from '@openzeppelin-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol';
-import { InscriptionToken } from '../BaseTokens/InscriptionToken.sol';
+import { InscriptionToken } from './InscriptionToken.sol';
 
 contract MyInscription is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     InscriptionToken aToken;
