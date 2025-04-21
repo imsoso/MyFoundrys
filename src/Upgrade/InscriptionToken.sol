@@ -7,9 +7,9 @@ import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/O
 import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 
 contract InscriptionToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
-    // 构造函数：仅用于 new 部署（内部调用 initialize）
+    // Constructor: only used for new deployments (calls initialize internally)
     constructor(string memory name, string memory symbol, address initialOwner) {
-        // 直接调用 initialize（模拟升级合约的初始化）
+        // Directly call initialize (simulate the initialization of an upgraded contract)
         initialize(name, symbol, initialOwner);
     }
 
