@@ -39,7 +39,9 @@ contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradea
         // check per mint amount
         if (perMint > totalSupply) revert PerMintExceedsTotalSupply();
 
-        address newToken = address(new InscriptionToken('InscitionToken', 'IT', address(this)));
+        address newToken = address(new InscriptionToken());
+        InscriptionToken(newToken).initialize('InscriptionToken', 'MIT', address(this));
+
         tokenInfos[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0 });
         emit InscriptionDeployed(newToken, symbol, totalSupply, perMint);
         return newToken;
