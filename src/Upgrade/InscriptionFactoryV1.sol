@@ -8,7 +8,16 @@ import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/I
 import { InscriptionToken } from './InscriptionToken.sol';
 
 contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
-    InscriptionToken aToken;
+    struct TokenInfo {
+        uint256 totalSupply; // total supply
+        uint256 perMint; // per mint amount
+        uint256 mintedAmount; // minted amount
+    }
+    mapping(address => TokenInfo) public tokenInfos;
+
+    error PerMintExceedsTotalSupply();
+
+    event InscriptionDeployed(address indexed tokenAddress, string symbol, uint256 totalSupply, uint256 perMint);
 
     constructor() {
         // disable initializer
@@ -24,6 +33,12 @@ contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradea
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function deployInscription(string memory symbol, uint totalSupply, uint perMint) external returns (address) {
-        aToken = new InscriptionToken('InscitionToken', 'IT', address(this));
+        // check per mint amount
+        if (perMint > totalSupply) revert PerMintExceedsTotalSupply();
+
+        address newToken = address(new InscriptionToken('InscitionToken', 'IT', address(this)));
+        tokenInfos[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0 });
+        emit InscriptionDeployed(newToken, symbol, totalSupply, perMint);
+        return newToken;
     }
 }
