@@ -16,8 +16,11 @@ contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradea
     mapping(address => TokenInfo) public tokenInfos;
 
     error PerMintExceedsTotalSupply();
+    error TokenNotDeployedByFactory();
+    error ExceedsTotalSupply();
 
     event InscriptionDeployed(address indexed tokenAddress, string symbol, uint256 totalSupply, uint256 perMint);
+    event InscriptionMinted(address indexed tokenAddress, address indexed to, uint256 amount);
 
     constructor() {
         // disable initializer
@@ -40,5 +43,21 @@ contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradea
         tokenInfos[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0 });
         emit InscriptionDeployed(newToken, symbol, totalSupply, perMint);
         return newToken;
+    }
+
+    function mintInscription(address tokenAddr) external {
+        TokenInfo storage info = tokenInfos[tokenAddr];
+
+        // check token is deployed by factory
+        if (info.totalSupply == 0) revert TokenNotDeployedByFactory();
+        // check minted amount
+        if (info.mintedAmount + info.perMint > info.totalSupply) revert ExceedsTotalSupply();
+
+        InscriptionToken(tokenAddr).mint(msg.sender, info.perMint);
+        // update minted amount
+        info.mintedAmount += info.perMint;
+
+        // emit event
+        emit InscriptionMinted(tokenAddr, msg.sender, info.perMint);
     }
 }
