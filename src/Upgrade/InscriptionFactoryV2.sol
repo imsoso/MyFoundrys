@@ -6,15 +6,18 @@ import { UUPSUpgradeable } from '@openzeppelin-upgradeable/contracts/proxy/utils
 import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol';
 import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 import { InscriptionToken } from './InscriptionToken.sol';
+import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 
 contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     struct TokenInfo {
         uint256 totalSupply; // total supply
         uint256 perMint; // per mint amount
         uint256 mintedAmount; // minted amount
+        uint256 price; // token mint cost
     }
-
     mapping(address => TokenInfo) public tokenInfos;
+
+    address public implementationContract;
 
     error PerMintExceedsTotalSupply();
     error TokenNotDeployedByFactory();
@@ -32,18 +35,22 @@ contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradea
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
+
+        // Deploy a token implementation contract as template
+        InscriptionToken tokenImpl = new InscriptionToken();
+        implementationContract = address(tokenImpl);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    function deployInscription(string memory symbol, uint totalSupply, uint perMint) external returns (address) {
+    function deployInscription(string memory symbol, uint totalSupply, uint perMint, uint price) external returns (address) {
         // check per mint amount
         if (perMint > totalSupply) revert PerMintExceedsTotalSupply();
 
-        address newToken = address(new InscriptionToken());
+        address newToken = Clones.clone(implementationContract);
         InscriptionToken(newToken).initialize('MyInscriptionToken', 'MIT', address(this));
 
-        tokenInfos[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0 });
+        tokenInfos[newToken] = TokenInfo({ totalSupply: totalSupply, perMint: perMint, mintedAmount: 0, price: price });
         emit InscriptionDeployed(newToken, symbol, totalSupply, perMint);
         return newToken;
     }
