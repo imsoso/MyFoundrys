@@ -7,11 +7,6 @@ import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/O
 import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 
 contract InscriptionToken is Initializable, ERC20Upgradeable, OwnableUpgradeable {
-    constructor() {
-        // disable initializer
-        _disableInitializers();
-    }
-
     function initialize(string memory name, string memory symbol, address initialOwner) public initializer {
         __ERC20_init(name, symbol);
         __Ownable_init(initialOwner);

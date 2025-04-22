@@ -27,11 +27,6 @@ contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradea
     event InscriptionDeployed(address indexed tokenAddress, string symbol, uint256 totalSupply, uint256 perMint);
     event InscriptionMinted(address indexed tokenAddress, address indexed to, uint256 amount);
 
-    constructor() {
-        // disable initializer
-        _disableInitializers();
-    }
-
     // upgradeable init
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
