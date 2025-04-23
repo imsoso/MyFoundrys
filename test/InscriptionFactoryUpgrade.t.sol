@@ -23,6 +23,7 @@ contract InscriptionFactoryUpgradeTest is Test {
         user2 = makeAddr('user2');
         address proxy = Upgrades.deployUUPSProxy('InscriptionFactoryV1.sol', abi.encodeCall(InscriptionFactoryV1.initialize, owner));
         factoryV1 = InscriptionFactoryV1(proxy);
+        factoryV2 = InscriptionFactoryV2(proxy);
         // Fund test users
         vm.deal(user1, 100 ether);
         vm.deal(user2, 100 ether);
@@ -47,5 +48,23 @@ contract InscriptionFactoryUpgradeTest is Test {
         assertEq(token.balanceOf(user1), 10, 'V1 mint failed, user balance mismatch');
         (, , ma) = factoryV1.tokenInfos(tokenAddrV1); // Get only mintedAmount
         assertEq(ma, 10, 'V1 minted amount after mint mismatch');
+    }
+
+    // --- Test Upgrade Process ---
+    function test_Upgrade_ToV2() public {
+        // 1. Deploy a token using V1
+        address tokenAddrV1 = factoryV1.deployInscription('TOKENV1', 1000, 10);
+        vm.prank(user1);
+        factoryV1.mintInscription(tokenAddrV1); // Mint 10
+        // 2. Upgrade to V2
+        vm.prank(owner); // Ensure owner context for upgrade
+        Upgrades.upgradeProxy(address(factoryV1), 'InscriptionFactoryV2.sol', abi.encodeCall(InscriptionFactoryV2.initialize, owner));
+        // 3. Access V1 token data using V2 interface
+        (uint256 tsV2, uint256 pmV2, uint256 maV2, uint256 priceV2) = factoryV2.tokenInfos(tokenAddrV1);
+        assertEq(tsV2, 1000, 'Post-upgrade V1 total supply mismatch');
+        assertEq(pmV2, 10, 'Post-upgrade V1 per mint mismatch');
+        assertEq(maV2, 10, 'Post-upgrade V1 minted amount mismatch');
+        // Price was not set in V1's storage slot, so it defaults to 0 when read via V2 struct
+        assertEq(priceV2, 0, 'Post-upgrade V1 price should be 0');
     }
 }
