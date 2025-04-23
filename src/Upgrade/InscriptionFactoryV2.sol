@@ -29,8 +29,8 @@ contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradea
     event InscriptionMinted(address indexed tokenAddress, address indexed to, uint256 amount);
 
     // upgradeable init
-    function initialize(address initialOwner) public initializer {
     /// @custom:oz-upgrades-validate-as-initializer
+    function initialize(address initialOwner) public reinitializer(2) {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
 
