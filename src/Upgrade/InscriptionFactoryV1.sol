@@ -7,6 +7,7 @@ import { OwnableUpgradeable } from '@openzeppelin-upgradeable/contracts/access/O
 import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 import { InscriptionToken } from './InscriptionToken.sol';
 
+/// @custom:oz-upgrades
 contract InscriptionFactoryV1 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     struct TokenInfo {
         uint256 totalSupply; // total supply

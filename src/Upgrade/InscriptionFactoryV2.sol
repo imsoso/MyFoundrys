@@ -8,6 +8,7 @@ import { Initializable } from '@openzeppelin-upgradeable/contracts/proxy/utils/I
 import { InscriptionToken } from './InscriptionToken.sol';
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 
+/// @custom:oz-upgrades-from InscriptionFactoryV1
 contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     struct TokenInfo {
         uint256 totalSupply; // total supply
@@ -29,6 +30,7 @@ contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradea
 
     // upgradeable init
     function initialize(address initialOwner) public initializer {
+    /// @custom:oz-upgrades-validate-as-initializer
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
 
