@@ -14,19 +14,16 @@ contract InscriptionFactoryUpgradeTest is Test {
     InscriptionFactoryV2 public factoryV2;
 
     address public owner;
-    address public user1;
-    address public user2;
+    address public user;
 
     function setUp() public {
         owner = address(this);
-        user1 = makeAddr('user1');
-        user2 = makeAddr('user2');
+        user = makeAddr('user');
         address proxy = Upgrades.deployUUPSProxy('InscriptionFactoryV1.sol', abi.encodeCall(InscriptionFactoryV1.initialize, owner));
         factoryV1 = InscriptionFactoryV1(proxy);
         factoryV2 = InscriptionFactoryV2(proxy);
         // Fund test users
-        vm.deal(user1, 100 ether);
-        vm.deal(user2, 100 ether);
+        vm.deal(user, 100 ether);
     }
 
     // --- Test V1 Functionality Before Upgrade ---
@@ -42,10 +39,10 @@ contract InscriptionFactoryUpgradeTest is Test {
         // Price should be default 0 for V1 struct slot, even if accessed via V2 interface later
 
         // Mint using V1
-        vm.prank(user1);
+        vm.prank(user);
         factoryV1.mintInscription(tokenAddrV1);
         InscriptionToken token = InscriptionToken(tokenAddrV1);
-        assertEq(token.balanceOf(user1), 10, 'V1 mint failed, user balance mismatch');
+        assertEq(token.balanceOf(user), 10, 'V1 mint failed, user balance mismatch');
         (, , ma) = factoryV1.tokenInfos(tokenAddrV1); // Get only mintedAmount
         assertEq(ma, 10, 'V1 minted amount after mint mismatch');
     }
@@ -54,7 +51,7 @@ contract InscriptionFactoryUpgradeTest is Test {
     function test_Upgrade_ToV2() public {
         // 1. Deploy a token using V1
         address tokenAddrV1 = factoryV1.deployInscription('TOKENV1', 1000, 10);
-        vm.prank(user1);
+        vm.prank(user);
         factoryV1.mintInscription(tokenAddrV1); // Mint 10
         // 2. Upgrade to V2
         vm.prank(owner); // Ensure owner context for upgrade
@@ -84,18 +81,18 @@ contract InscriptionFactoryUpgradeTest is Test {
         assertEq(info.mintedAmount, 0, 'V2 initial minted amount mismatch');
         // Mint using V2 (requires payment)
         uint256 cost = info.price * info.perMint; // 0.01 ether * 50 = 0.5 ether
-        vm.deal(user1, cost); // Give user1 funds
-        vm.prank(user1);
+        vm.deal(user, cost); // Give user funds
+        vm.prank(user);
         factoryV2.mintInscription{ value: cost }(tokenAddrV2);
         InscriptionToken token = InscriptionToken(tokenAddrV2);
-        assertEq(token.balanceOf(user1), 50, 'V2 mint failed, user1 balance mismatch');
+        assertEq(token.balanceOf(user), 50, 'V2 mint failed, user balance mismatch');
         (info.totalSupply, info.perMint, info.mintedAmount, info.price) = factoryV2.tokenInfos(tokenAddrV2); // Re-fetch info after mint
         assertEq(info.mintedAmount, 50, 'V2 minted amount after mint mismatch');
         assertEq(address(factoryV2).balance, cost, 'Factory balance mismatch after V2 mint'); // Check if factory received payment correctly
 
-        vm.deal(user1, cost); // Give user1 funds again
+        vm.deal(user, cost); // Give user funds again
         // Test insufficient payment
-        vm.prank(user1);
+        vm.prank(user);
         vm.expectRevert(InscriptionFactoryV2.InsufficientPayment.selector);
         factoryV2.mintInscription{ value: cost - 1 }(tokenAddrV2);
     }
