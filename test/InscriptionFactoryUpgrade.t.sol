@@ -67,4 +67,36 @@ contract InscriptionFactoryUpgradeTest is Test {
         // Price was not set in V1's storage slot, so it defaults to 0 when read via V2 struct
         assertEq(priceV2, 0, 'Post-upgrade V1 price should be 0');
     }
+
+    function test_PostUpgrade_DeployAndMintV2Token_PotentialIssue() public {
+        // 1. Upgrade to V2
+        vm.prank(owner); // Ensure owner context for upgrade
+        Upgrades.upgradeProxy(address(factoryV1), 'InscriptionFactoryV2.sol', abi.encodeCall(InscriptionFactoryV2.initialize, owner));
+
+        address tokenAddrV2 = factoryV2.deployInscription('TOKENV2', 5000, 50, 0.01 ether);
+        // If deploy succeeds (e.g., after manual storage set or V2 modification):
+        assertTrue(tokenAddrV2 != address(0), 'V2 deployment failed post-upgrade');
+        InscriptionFactoryV2.TokenInfo memory info;
+        (info.totalSupply, info.perMint, info.mintedAmount, info.price) = factoryV2.tokenInfos(tokenAddrV2);
+        assertEq(info.totalSupply, 5000, 'V2 total supply mismatch');
+        assertEq(info.perMint, 50, 'V2 per mint mismatch');
+        assertEq(info.price, 0.01 ether, 'V2 price mismatch');
+        assertEq(info.mintedAmount, 0, 'V2 initial minted amount mismatch');
+        // Mint using V2 (requires payment)
+        uint256 cost = info.price * info.perMint; // 0.01 ether * 50 = 0.5 ether
+        vm.deal(user1, cost); // Give user1 funds
+        vm.prank(user1);
+        factoryV2.mintInscription{ value: cost }(tokenAddrV2);
+        InscriptionToken token = InscriptionToken(tokenAddrV2);
+        assertEq(token.balanceOf(user1), 50, 'V2 mint failed, user1 balance mismatch');
+        (info.totalSupply, info.perMint, info.mintedAmount, info.price) = factoryV2.tokenInfos(tokenAddrV2); // Re-fetch info after mint
+        assertEq(info.mintedAmount, 50, 'V2 minted amount after mint mismatch');
+        assertEq(address(factoryV2).balance, cost, 'Factory balance mismatch after V2 mint'); // Check if factory received payment correctly
+
+        vm.deal(user1, cost); // Give user1 funds again
+        // Test insufficient payment
+        vm.prank(user1);
+        vm.expectRevert(InscriptionFactoryV2.InsufficientPayment.selector);
+        factoryV2.mintInscription{ value: cost - 1 }(tokenAddrV2);
+    }
 }
