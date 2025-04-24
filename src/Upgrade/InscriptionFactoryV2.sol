@@ -63,8 +63,8 @@ contract InscriptionFactoryV2 is Initializable, UUPSUpgradeable, OwnableUpgradea
 
         // check payment
         if (msg.value < info.price * info.perMint) revert InsufficientPayment();
-        InscriptionToken(tokenAddr).transfer(address(this), info.price);
 
+        // mint token
         InscriptionToken(tokenAddr).mint(msg.sender, info.perMint);
 
         // update minted amount
