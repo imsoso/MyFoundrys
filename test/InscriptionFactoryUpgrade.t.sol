@@ -96,4 +96,55 @@ contract InscriptionFactoryUpgradeTest is Test {
         vm.expectRevert(InscriptionFactoryV2.InsufficientPayment.selector);
         factoryV2.mintInscription{ value: cost - 1 }(tokenAddrV2);
     }
+
+    function test_PostUpgrade_DeployAndMintV2Token_WithSetup() public {
+        // 1. Upgrade to V2
+        vm.prank(owner); // Ensure owner context for upgrade
+        Upgrades.upgradeProxy(address(factoryV1), 'InscriptionFactoryV2.sol', abi.encodeCall(InscriptionFactoryV2.initialize, owner));
+
+        // 2. Deploy a new token using V2 interface
+        uint price = 0.01 ether;
+
+        address tokenAddrV2 = factoryV2.deployInscription('TOKENV2', 5000, 50, price);
+        assertTrue(tokenAddrV2 != address(0), 'V2 deployment failed post-upgrade');
+
+        (uint256 tsV2_new, uint256 pmV2_new, uint256 maV2_new, uint256 priceV2_new) = factoryV2.tokenInfos(tokenAddrV2);
+        assertEq(tsV2_new, 5000, 'V2 total supply mismatch');
+        assertEq(pmV2_new, 50, 'V2 per mint mismatch');
+        assertEq(priceV2_new, price, 'V2 price mismatch');
+        assertEq(maV2_new, 0, 'V2 initial minted amount mismatch');
+
+        // 3. Mint using V2 (requires payment)
+        uint256 cost = priceV2_new * pmV2_new; // Use destructured values
+        vm.deal(user, cost); // Give user funds
+        vm.prank(user);
+        factoryV2.mintInscription{ value: cost }(tokenAddrV2);
+        InscriptionToken token = InscriptionToken(tokenAddrV2);
+        assertEq(token.balanceOf(user), 50, 'V2 mint failed, user balance mismatch');
+        (, , uint256 maV2_afterMint, uint256 priceV2_afterMint) = factoryV2.tokenInfos(tokenAddrV2);
+        assertEq(maV2_afterMint, 50, 'V2 minted amount after mint mismatch');
+        // Check if factory received payment correctly
+        // Note: V2's mint transfers the *token* to the factory, not the ETH payment.
+        // The ETH payment remains in the factory contract unless explicitly withdrawn.
+        assertEq(address(factoryV2).balance, cost, 'Factory ETH balance mismatch after V2 mint');
+        // 4. Test insufficient payment
+        vm.deal(user, cost); // Give user funds again
+        vm.prank(user);
+        vm.expectRevert(InscriptionFactoryV2.InsufficientPayment.selector);
+        factoryV2.mintInscription{ value: cost - 1 }(tokenAddrV2);
+        // 5. Test minting exceeds total supply
+        (uint256 tsV2_final, uint256 pmV2_final, uint256 maV2_final, ) = factoryV2.tokenInfos(tokenAddrV2);
+        uint remainingMints = (tsV2_final - maV2_final) / pmV2_final;
+        for (uint i = 0; i < remainingMints; i++) {
+            vm.deal(user, cost);
+            vm.prank(user);
+            factoryV2.mintInscription{ value: cost }(tokenAddrV2);
+        }
+        (uint256 tsV2_end, , uint256 maV2_end, ) = factoryV2.tokenInfos(tokenAddrV2);
+        assertEq(maV2_end, tsV2_end, 'Should have minted up to total supply');
+        vm.deal(user, cost);
+        vm.prank(user);
+        vm.expectRevert(InscriptionFactoryV2.ExceedsTotalSupply.selector);
+        factoryV2.mintInscription{ value: cost }(tokenAddrV2);
+    }
 }
