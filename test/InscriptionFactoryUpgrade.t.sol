@@ -121,7 +121,7 @@ contract InscriptionFactoryUpgradeTest is Test {
         factoryV2.mintInscription{ value: cost }(tokenAddrV2);
         InscriptionToken token = InscriptionToken(tokenAddrV2);
         assertEq(token.balanceOf(user), 50, 'V2 mint failed, user balance mismatch');
-        (, , uint256 maV2_afterMint, uint256 priceV2_afterMint) = factoryV2.tokenInfos(tokenAddrV2);
+        (, , uint256 maV2_afterMint, ) = factoryV2.tokenInfos(tokenAddrV2);
         assertEq(maV2_afterMint, 50, 'V2 minted amount after mint mismatch');
         // Check if factory received payment correctly
         // Note: V2's mint transfers the *token* to the factory, not the ETH payment.
