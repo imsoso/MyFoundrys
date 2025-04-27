@@ -12,6 +12,7 @@ import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 import '@openzeppelin-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol';
 
+/// @custom:oz-upgrades-from NFTMarketV1
 contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable, EIP712Upgradeable {
     IERC721 public nftContract;
 
@@ -29,8 +30,8 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable, EIP7
         uint256 deadline;
     }
 
-    mapping(uint256 => SellOrder) public listingOrders; // tokenID -> order book
     mapping(uint256 => NFTProduct) public NFTList;
+    mapping(uint256 => SellOrder) public listingOrders; // tokenID -> order book
 
     error PriceGreaterThanZero();
     error SignatureExpired();
