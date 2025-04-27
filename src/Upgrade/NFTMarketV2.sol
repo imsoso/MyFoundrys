@@ -8,8 +8,11 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 import '@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
-contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable {
+import '@openzeppelin-upgradeable/contracts/utils/cryptography/EIP712Upgradeable.sol';
+
+contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable, EIP712Upgradeable {
     IERC721 public nftContract;
 
     IERC20 public nftToken;
@@ -19,7 +22,29 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable {
         address seller;
     }
 
+    struct SellOrder {
+        address seller;
+        uint256 tokenId;
+        uint256 price;
+        uint256 deadline;
+    }
+
+    mapping(uint256 => SellOrder) public listingOrders; // tokenID -> order book
     mapping(uint256 => NFTProduct) public NFTList;
+
+    error PriceGreaterThanZero();
+    error SignatureExpired();
+    error OrderAleardyListed();
+    error InvalidSignature();
+
+    event NFTListedWithSignature(
+        uint256 indexed tokenId,
+        address indexed seller,
+        uint256 price,
+        uint256 deadline,
+        bytes signature,
+        bool isValid
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -29,6 +54,7 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable {
     // initialize function
     function initialize(address _nftContract, address _nftToken, address initialOwner) public initializer {
         __Ownable_init(initialOwner);
+        __EIP712_init('NFTMarket', '1');
 
         nftContract = IERC721(_nftContract);
         nftToken = IERC20(_nftToken);
@@ -71,5 +97,32 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable {
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         // do nothing here
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function listWithSignature(uint256 tokenId, uint256 price, uint256 deadline, bytes memory signature) external {
+        if (deadline < block.timestamp) revert SignatureExpired();
+        if (price == 0) revert PriceGreaterThanZero();
+
+        if (listingOrders[tokenId].seller != address(0)) {
+            revert OrderAleardyListed();
+        }
+
+        SellOrder memory theOrder = SellOrder({ seller: msg.sender, tokenId: tokenId, price: price, deadline: deadline });
+
+        bytes32 hashedOrder = keccak256(abi.encode(theOrder));
+        // safe check repeat list
+        if (listingOrders[tokenId].seller != address(0)) {
+            revert OrderAleardyListed();
+        }
+
+        bytes32 digest = _hashTypedDataV4(hashedOrder);
+
+        address theSigner = ECDSA.recover(digest, signature);
+        if (theSigner != msg.sender) {
+            revert InvalidSignature();
+        }
+    
+        listingOrders[tokenId] = theOrder;
+        emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
     }
 }
