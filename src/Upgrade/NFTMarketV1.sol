@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol';
 import '@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol';
 
-contract NFTMarket is IERC721Receiver, Initializable, OwnableUpgradeable {
+contract NFTMarketV1 is IERC721Receiver, Initializable, OwnableUpgradeable {
     IERC721 public nftContract;
 
     IERC20 public nftToken;

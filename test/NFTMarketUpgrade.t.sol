@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import { Test, console } from 'forge-std/Test.sol';
-import { NFTMarket } from '../src/Upgrade/NFTMarketV1.sol';
+import { NFTMarketV1 } from '../src/Upgrade/NFTMarketV1.sol';
 import { NFTMarketV2 } from '../src/Upgrade/NFTMarketV2.sol';
 import '../src/BaseTokens/ERC20WithPermit.sol';
 import '../src/NFTs/MyNFT.sol';
@@ -10,7 +10,7 @@ import '../src/NFTs/MyNFT.sol';
 import { Upgrades } from 'openzeppelin-foundry-upgrades/Upgrades.sol';
 
 contract NFTMarketUpgrade is Test {
-    NFTMarket public nftMarketV1;
+    NFTMarketV1 public nftMarketV1;
     NFTMarketV2 public nftMarketV2;
 
     SoToken public aToken;
@@ -27,13 +27,12 @@ contract NFTMarketUpgrade is Test {
         aNFT = new SoNFT(owner);
 
         address proxy = Upgrades.deployTransparentProxy(
-            'NFTMarket.sol',
-            owner,
-            abi.encodeCall(NFTMarket.initialize, (address(aNFT), address(aToken), owner))
+            'NFTMarketV1.sol',
+            address(proxyAdmin),
+            abi.encodeCall(NFTMarketV1.initialize, (address(aNFT), address(aToken), owner)),
+            aOpt
         );
-        nftMarketV1 = NFTMarket(proxy);
+        nftMarketV1 = NFTMarketV1(proxy);
         nftMarketV2 = NFTMarketV2(proxy);
-        // Fund test users
-        vm.deal(user, 100 ether);
     }
 }
