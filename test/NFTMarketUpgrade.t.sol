@@ -38,16 +38,10 @@ contract NFTMarketUpgrade is Test {
             'https://chocolate-acceptable-hawk-967.mypinata.cloud/ipfs/QmRWFi6XoDFchaZ25g8fTRxY3tc4E289AUQvpUcTqP3w7L'
         );
 
-        proxyAdmin = new ProxyAdmin(owner);
-
-        Options memory aOpt;
-        aOpt.unsafeSkipProxyAdminCheck = true;
-
         address proxy = Upgrades.deployTransparentProxy(
-            'NFTMarketV1.sol',
-            address(proxyAdmin),
-            abi.encodeCall(NFTMarketV1.initialize, (address(aNFT), address(aToken), address(proxyAdmin))),
-            aOpt
+            'NFTMarketV1.sol:NFTMarketV1',
+            admin,
+            abi.encodeCall(NFTMarketV1.initialize, (address(aNFT), address(aToken), owner))
         );
         nftMarketV1 = NFTMarketV1(proxy);
         nftMarketV2 = NFTMarketV2(proxy);
@@ -60,4 +54,15 @@ contract NFTMarketUpgrade is Test {
         vm.stopPrank();
     }
 
+    // --- Test Upgrade Process ---
+    function test_Upgrade_ToV2() public {
+        // Upgrade to V2
+        vm.startPrank(admin); // Ensure owner context for upgrade
+        Upgrades.upgradeProxy(
+            address(nftMarketV1),
+            'NFTMarketV2.sol:NFTMarketV2',
+            abi.encodeCall(NFTMarketV2.initialize, (address(aNFT), address(aToken), owner))
+        );
+        vm.stopPrank(); // Ensure owner context for upgrade
+    }
 }
