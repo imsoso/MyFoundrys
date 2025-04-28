@@ -123,8 +123,13 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable, EIP7
         if (theSigner != msg.sender) {
             revert InvalidSignature();
         }
-    
+
         listingOrders[tokenId] = theOrder;
         emit NFTListedWithSignature(tokenId, theSigner, price, deadline, signature, true);
+    }
+
+    // Helper function to expose _hashTypedDataV4 for tests
+    function hashTypedData(bytes32 structHash) external view returns (bytes32) {
+        return _hashTypedDataV4(structHash);
     }
 }
