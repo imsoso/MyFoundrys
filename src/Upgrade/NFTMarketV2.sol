@@ -53,7 +53,8 @@ contract NFTMarketV2 is IERC721Receiver, Initializable, OwnableUpgradeable, EIP7
     }
 
     // initialize function
-    function initialize(address _nftContract, address _nftToken, address initialOwner) public initializer {
+    /// @custom:oz-upgrades-validate-as-initializer
+    function initialize(address _nftContract, address _nftToken, address initialOwner) public reinitializer(2) {
         __Ownable_init(initialOwner);
         __EIP712_init('NFTMarket', '1');
 
