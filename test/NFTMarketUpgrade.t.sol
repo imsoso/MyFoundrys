@@ -67,6 +67,27 @@ contract NFTMarketUpgrade is Test {
         );
         vm.stopPrank(); // Ensure owner context for upgrade
     }
+
+    function test_PostUpgrade_DeployAndListNFT_WithSignature() public {
+        // Phase 1: Upgrade to V2
+        test_Upgrade_ToV2();
+
+        // Phase 2: Seller lists NFT with signature
+        vm.startPrank(seller);
+        aNFT.approve(address(nftMarketV2), nftId);
+        (uint256 price, uint256 deadline, bytes memory signature) = _createSignedSellOrder();
+
+        nftMarketV2.listWithSignature(nftId, price, deadline, signature);
+        vm.stopPrank();
+
+        // Phase 3: Verify listing
+        (address actualSeller, uint256 actualTokenId, uint256 actualPrice, uint256 actualDeadline) = nftMarketV2.listingOrders(nftId);
+        assertEq(actualSeller, seller, 'Seller address mismatch');
+        assertEq(actualTokenId, nftId, 'Token ID mismatch');
+        assertEq(actualPrice, price, 'Price mismatch');
+        assertEq(actualDeadline, deadline, 'Deadline mismatch');
+    }
+
     // Helper: Create signed SellOrder
     function _createSignedSellOrder() private view returns (uint256 price, uint256 deadline, bytes memory signature) {
         price = 100;
