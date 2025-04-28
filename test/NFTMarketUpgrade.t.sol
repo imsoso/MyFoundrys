@@ -67,4 +67,18 @@ contract NFTMarketUpgrade is Test {
         );
         vm.stopPrank(); // Ensure owner context for upgrade
     }
+    // Helper: Create signed SellOrder
+    function _createSignedSellOrder() private view returns (uint256 price, uint256 deadline, bytes memory signature) {
+        price = 100;
+        deadline = block.timestamp + 1 days;
+
+        NFTMarketV2.SellOrder memory order = NFTMarketV2.SellOrder({ seller: seller, tokenId: nftId, price: price, deadline: deadline });
+
+        bytes32 hashedOrder = keccak256(abi.encode(order));
+        bytes32 digest = nftMarketV2.hashTypedData(hashedOrder);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sellerPrivateKey, digest);
+        signature = abi.encodePacked(r, s, v);
+        return (price, deadline, signature);
+    }
 }
