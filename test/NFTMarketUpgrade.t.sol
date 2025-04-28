@@ -9,7 +9,6 @@ import '../src/NFTs/MyNFT.sol';
 
 import { Upgrades } from 'openzeppelin-foundry-upgrades/Upgrades.sol';
 import '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol';
-import { Options } from 'openzeppelin-foundry-upgrades/Options.sol';
 
 contract NFTMarketUpgrade is Test {
     NFTMarketV1 public nftMarketV1;
