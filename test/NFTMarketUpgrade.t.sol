@@ -22,13 +22,16 @@ contract NFTMarketUpgrade is Test {
     address public owner;
 
     address public seller;
+    uint256 internal sellerPrivateKey;
 
     ProxyAdmin proxyAdmin;
 
     function setUp() public {
         owner = address(this);
         admin = makeAddr('admin');
-        seller = makeAddr('seller');
+
+        sellerPrivateKey = 0xa11ce;
+        seller = vm.addr(sellerPrivateKey);
 
         aToken = new SoToken(owner);
         aNFT = new SoNFT(owner);
