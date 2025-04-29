@@ -60,11 +60,7 @@ contract NFTMarketUpgrade is Test {
     function test_Upgrade_ToV2() public {
         // Upgrade to V2
         vm.startPrank(admin); // Ensure owner context for upgrade
-        Upgrades.upgradeProxy(
-            address(nftMarketV1),
-            'NFTMarketV2.sol:NFTMarketV2',
-            abi.encodeCall(NFTMarketV2.initialize, (address(aNFT), address(aToken), owner))
-        );
+        Upgrades.upgradeProxy(address(nftMarketV1), 'NFTMarketV2.sol:NFTMarketV2', '');
         vm.stopPrank(); // Ensure owner context for upgrade
     }
 
