@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
+import '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
 
 contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
     IERC721 public nftContract;
@@ -15,8 +16,14 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         uint256 price;
         address seller;
     }
-
     mapping(uint256 => NFTProduct) public NFTList;
+
+    error SignatureExpired();
+    error NFTNotListed();
+    error NotTheSeller();
+    error IncorrectPayment(uint256 expected, uint256 received);
+
+    event PermitPrePay(uint256 indexed tokenId, address indexed buyer, uint256 price);
 
     constructor(address _nftContract, address initialOwner) Ownable(initialOwner) {
         nftContract = IERC721(_nftContract);
@@ -31,6 +38,7 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         nftContract.safeTransferFrom(msg.sender, address(this), tokenId);
         NFTList[tokenId] = NFTProduct({ price: price, seller: msg.sender });
     }
+
     function buyNFT(address buyer, uint256 amount, uint256 nftId) public {
         NFTProduct memory aNFT = NFTList[nftId];
         //You cannot buy your own NFT
@@ -43,6 +51,29 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
 
         nftContract.transferFrom(address(this), buyer, nftId);
         delete NFTList[nftId];
+    }
+
+    function permitPrePay(uint256 tokenID, uint256 price, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        if (deadline < block.timestamp) {
+            revert SignatureExpired();
+        }
+
+        NFTProduct memory theNFT = NFTList[tokenID];
+        if (theNFT.seller == address(0)) {
+            revert NFTNotListed();
+        }
+
+        if (msg.sender == theNFT.seller) {
+            revert NotTheSeller();
+        }
+
+        if (price != theNFT.price) {
+            revert IncorrectPayment(theNFT.price, price);
+        }
+
+        nftToken.permit(msg.sender, address(this), price, deadline, v, r, s);
+
+        emit PermitPrePay(tokenID, msg.sender, price);
     }
 
     function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
