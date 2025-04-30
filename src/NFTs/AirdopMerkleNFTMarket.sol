@@ -3,13 +3,13 @@ pragma solidity ^0.8.28;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
+import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
 
 contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
     IERC721 public nftContract;
 
-    IERC20 public nftToken;
+    SoToken public nftToken;
 
     struct NFTProduct {
         uint256 price;
@@ -18,9 +18,9 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
 
     mapping(uint256 => NFTProduct) public NFTList;
 
-    constructor(address _nftContract, address _nftToken, address initialOwner) Ownable(initialOwner) {
+    constructor(address _nftContract, address initialOwner) Ownable(initialOwner) {
         nftContract = IERC721(_nftContract);
-        nftToken = IERC20(_nftToken);
+        nftToken = SoToken(initialOwner);
     }
 
     // List NFT on the market
