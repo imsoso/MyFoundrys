@@ -53,6 +53,20 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         delete NFTList[nftId];
     }
 
+    function whiteListBuyNFT(address buyer, uint256 amount, uint256 nftId) public {
+        NFTProduct memory aNFT = NFTList[nftId];
+        //You cannot buy your own NFT
+        require(aNFT.seller != buyer, 'You cannot buy your own NFT');
+
+        require(nftToken.balanceOf(buyer) >= amount, 'Insufficient payment token balance');
+
+        require(amount < aNFT.price / 2, 'Insufficient token amount to buy NFT');
+        require(nftToken.transferFrom(buyer, aNFT.seller, aNFT.price / 2), 'Token transfer failed');
+
+        nftContract.transferFrom(address(this), buyer, nftId);
+        delete NFTList[nftId];
+    }
+
     function permitPrePay(uint256 tokenID, uint256 price, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         if (deadline < block.timestamp) {
             revert SignatureExpired();
