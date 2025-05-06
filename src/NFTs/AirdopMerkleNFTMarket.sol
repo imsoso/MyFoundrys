@@ -6,11 +6,16 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import { Ownable } from '@openzeppelin/contracts/access/Ownable.sol';
 import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
 import '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
+import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
-    IERC721 public nftContract;
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
-    SoToken public nftToken;
+    IERC721 public nftContract;
+    SoToken public soToken;
+    address public whitelistSigner;
 
     struct NFTProduct {
         uint256 price;
@@ -22,12 +27,15 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
     error NFTNotListed();
     error NotTheSeller();
     error IncorrectPayment(uint256 expected, uint256 received);
+    error NotSignedByWhitelist();
 
-    event PermitPrePay(uint256 indexed tokenId, address indexed buyer, uint256 price);
+    event PermitPrePay(address indexed buyer, uint256 price);
+    event WhitelistBuy(address indexed buyer, uint256 amount, uint256 nftId);
+    event ClaimNFT(uint256 nftId, uint256 amount);
 
     constructor(address _nftContract, address initialOwner) Ownable(initialOwner) {
         nftContract = IERC721(_nftContract);
-        nftToken = SoToken(initialOwner);
+        soToken = SoToken(initialOwner);
     }
 
     // List NFT on the market
@@ -67,12 +75,18 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         delete NFTList[nftId];
     }
 
-    function permitPrePay(uint256 tokenID, uint256 price, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+    function permitPrePay(uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         if (deadline < block.timestamp) {
             revert SignatureExpired();
         }
 
-        NFTProduct memory theNFT = NFTList[tokenID];
+        soToken.permit(msg.sender, address(this), amount, deadline, v, r, s);
+
+        emit PermitPrePay(msg.sender, amount);
+    }
+
+    function claimNFT(uint256 nftId, uint256 price, bytes memory whitelistSignature) external {
+        NFTProduct memory theNFT = NFTList[nftId];
         if (theNFT.seller == address(0)) {
             revert NFTNotListed();
         }
@@ -85,9 +99,16 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
             revert IncorrectPayment(theNFT.price, price);
         }
 
-        nftToken.permit(msg.sender, address(this), price, deadline, v, r, s);
+        bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, nftId));
+        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
+        address theSigner = ethSignedWithSenderAndToken.recover(whitelistSignature);
+        if (theSigner != whitelistSigner) {
+            revert NotSignedByWhitelist();
+        }
 
-        emit PermitPrePay(tokenID, msg.sender, price);
+        whiteListBuyNFT(msg.sender, price, nftId);
+
+        emit ClaimNFT(nftId, price);
     }
 
     function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
