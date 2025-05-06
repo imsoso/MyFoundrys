@@ -15,7 +15,6 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
 
     IERC721 public nftContract;
     SoToken public soToken;
-    address public whitelistSigner;
 
     struct NFTProduct {
         uint256 price;
@@ -85,7 +84,7 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         emit PermitPrePay(msg.sender, price);
     }
 
-    function claimNFT(uint256 nftId, uint256 price, bytes memory whitelistSignature) external {
+    function claimNFT(uint256 nftId, uint256 price, bytes32[] calldata proof, bytes32 merkleRoot) external {
         NFTProduct memory theNFT = NFTList[nftId];
         if (theNFT.seller == address(0)) {
             revert NFTNotListed();
@@ -99,10 +98,7 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
             revert IncorrectPayment(theNFT.price, price);
         }
 
-        bytes32 messageWithSenderAndToken = keccak256(abi.encodePacked(msg.sender, nftId));
-        bytes32 ethSignedWithSenderAndToken = messageWithSenderAndToken.toEthSignedMessageHash();
-        address theSigner = ethSignedWithSenderAndToken.recover(whitelistSignature);
-        if (theSigner != whitelistSigner) {
+        if (!verifyWhitelistWithMerkleTree(msg.sender, proof, merkleRoot)) {
             revert NotSignedByWhitelist();
         }
 
@@ -126,5 +122,13 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         // do nothing here
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function verifyWhitelistWithMerkleTree(address user, bytes32[] calldata proof, bytes32 merkleRoot) internal pure returns (bool) {
+        // calculate the leaf node hash
+        bytes32 leaf = keccak256(abi.encodePacked(user));
+
+        // verify if the user is in the whitelist
+        return MerkleProof.verify(proof, merkleRoot, leaf);
     }
 }
