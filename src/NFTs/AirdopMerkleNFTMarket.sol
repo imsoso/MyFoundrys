@@ -8,8 +8,9 @@ import { SoToken } from '../BaseTokens/ERC20WithPermit.sol';
 import '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
 import '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
 import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/utils/Multicall.sol';
 
-contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
+contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable, Multicall {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
