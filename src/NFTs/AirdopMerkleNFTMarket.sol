@@ -30,8 +30,8 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
     error NotSignedByWhitelist();
 
     event PermitPrePay(address indexed buyer, uint256 price);
-    event WhitelistBuy(address indexed buyer, uint256 amount, uint256 nftId);
-    event ClaimNFT(uint256 nftId, uint256 amount);
+    event WhitelistBuy(address indexed buyer, uint256 price, uint256 nftId);
+    event ClaimNFT(uint256 nftId, uint256 price);
 
     constructor(address _nftContract, address initialOwner) Ownable(initialOwner) {
         nftContract = IERC721(_nftContract);
@@ -47,42 +47,42 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         NFTList[nftId] = NFTProduct({ price: price, seller: msg.sender });
     }
 
-    function buyNFT(address buyer, uint256 amount, uint256 nftId) public {
+    function buyNFT(address buyer, uint256 price, uint256 nftId) public {
         NFTProduct memory aNFT = NFTList[nftId];
         //You cannot buy your own NFT
         require(aNFT.seller != buyer, 'You cannot buy your own NFT');
 
-        require(soToken.balanceOf(buyer) >= amount, 'Insufficient payment token balance');
+        require(soToken.balanceOf(buyer) >= price, 'Insufficient payment token balance');
 
-        require(amount == aNFT.price, 'Insufficient token amount to buy NFT');
+        require(price == aNFT.price, 'Insufficient token price to buy NFT');
         require(soToken.transferFrom(buyer, aNFT.seller, aNFT.price), 'Token transfer failed');
 
         nftContract.transferFrom(address(this), buyer, nftId);
         delete NFTList[nftId];
     }
 
-    function whiteListBuyNFT(address buyer, uint256 amount, uint256 nftId) public {
+    function whiteListBuyNFT(address buyer, uint256 price, uint256 nftId) public {
         NFTProduct memory aNFT = NFTList[nftId];
         //You cannot buy your own NFT
         require(aNFT.seller != buyer, 'You cannot buy your own NFT');
 
-        require(soToken.balanceOf(buyer) >= amount, 'Insufficient payment token balance');
+        require(soToken.balanceOf(buyer) >= price, 'Insufficient payment token balance');
 
-        require(amount < aNFT.price / 2, 'Insufficient token amount to buy NFT');
+        require(price < aNFT.price / 2, 'Insufficient token price to buy NFT');
         require(soToken.transferFrom(buyer, aNFT.seller, aNFT.price / 2), 'Token transfer failed');
 
         nftContract.transferFrom(address(this), buyer, nftId);
         delete NFTList[nftId];
     }
 
-    function permitPrePay(uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+    function permitPrePay(uint256 price, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         if (deadline < block.timestamp) {
             revert SignatureExpired();
         }
 
-        soToken.permit(msg.sender, address(this), amount, deadline, v, r, s);
+        soToken.permit(msg.sender, address(this), price, deadline, v, r, s);
 
-        emit PermitPrePay(msg.sender, amount);
+        emit PermitPrePay(msg.sender, price);
     }
 
     function claimNFT(uint256 nftId, uint256 price, bytes memory whitelistSignature) external {
@@ -111,15 +111,15 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable {
         emit ClaimNFT(nftId, price);
     }
 
-    function tokensReceived(address from, uint256 amount, bytes calldata userData) external {
+    function tokensReceived(address from, uint256 price, bytes calldata userData) external {
         require(msg.sender == address(soToken), 'Only the ERC20 token contract can call this');
         uint256 theNftId = abi.decode(userData, (uint256));
         NFTProduct memory aNFT = NFTList[theNftId];
         require(aNFT.price > 0, 'NFT is not listed for sale');
-        require(amount == aNFT.price, 'Incorrect payment amount');
+        require(price == aNFT.price, 'Incorrect payment price');
 
         nftContract.safeTransferFrom(address(this), from, theNftId);
-        soToken.transfer(aNFT.seller, amount);
+        soToken.transfer(aNFT.seller, price);
         delete NFTList[theNftId];
     }
 
