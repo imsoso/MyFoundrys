@@ -22,12 +22,14 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable, Multicall {
         address seller;
     }
     mapping(uint256 => NFTProduct) public NFTList;
+    mapping(address => bool) public claimed; // can claim only once
 
     error SignatureExpired();
     error NFTNotListed();
     error NotTheSeller();
     error IncorrectPayment(uint256 expected, uint256 received);
     error NotSignedByWhitelist();
+    error NFTAlreadyClaimed();
 
     event PermitPrePay(address indexed buyer, uint256 price);
     event WhitelistBuy(address indexed buyer, uint256 price, uint256 nftId);
@@ -103,7 +105,12 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable, Multicall {
             revert NotSignedByWhitelist();
         }
 
+        if (claimed[msg.sender]) {
+            revert NFTAlreadyClaimed();
+        }
+
         whiteListBuyNFT(msg.sender, price, nftId);
+        claimed[msg.sender] = true;
 
         emit ClaimNFT(nftId, price);
     }
