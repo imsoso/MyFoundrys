@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { Test, console } from 'forge-std/Test.sol';
+import 'forge-std/console2.sol';
 import { AirdopMerkleNFTMarket } from '../src/NFTs/AirdopMerkleNFTMarket.sol';
 import { SoToken } from '../src/BaseTokens/ERC20WithPermit.sol';
 import '../src/NFTs/MyNFT.sol';
@@ -9,9 +10,11 @@ import '../src/NFTs/MyNFT.sol';
 contract AirdopMerkleNFTMarketTest is Test {
     AirdopMerkleNFTMarket public aNftMarket;
     SoNFT public aNFT;
+    SoToken public paymentToken;
 
     address public owner;
     address seller;
+    address buyer;
 
     address internal buyer1;
     address internal buyer2;
@@ -27,6 +30,7 @@ contract AirdopMerkleNFTMarketTest is Test {
     function setUp() public {
         owner = address(this);
         seller = makeAddr('seller');
+        buyer = makeAddr('buyer');
 
         // test 100 whitelist buyers
         uint256 numWhitelist = 100;
@@ -46,8 +50,17 @@ contract AirdopMerkleNFTMarketTest is Test {
 
         merkleRoot = computeMerkleRoot(leaves);
 
+        paymentToken = new SoToken(owner);
+        paymentToken.mint(buyer, 20_000 * 10 ** paymentToken.decimals());
+        paymentToken.mint(owner, 1000 * 10 ** 18);
+
+        // mint tokens to whitelist buyers
+        for (uint256 i = 0; i < whitelistBuyers.length; i++) {
+            paymentToken.mint(whitelistBuyers[i], 2000 * 10 ** paymentToken.decimals());
+        }
+
         aNFT = new SoNFT(owner);
-        aNftMarket = new AirdopMerkleNFTMarket(address(aNFT), owner);
+        aNftMarket = new AirdopMerkleNFTMarket(address(aNFT), address(paymentToken));
 
         nftId = aNFT.mint(
             seller,
@@ -55,7 +68,68 @@ contract AirdopMerkleNFTMarketTest is Test {
         );
     }
 
-    function testClaimNFT() public {}
+    function testClaimNFT() public {
+        uint256 buyerIndex = 0; // test the first whitelist buyer
+        address currentBuyer = whitelistBuyers[buyerIndex];
+        uint256 currentBuyerPK = whitelistBuyersPrivateKeys[buyerIndex];
+
+        uint256 price = 100 * 10 ** paymentToken.decimals();
+        uint256 deadline = block.timestamp + 1 hours;
+
+        vm.startPrank(seller);
+        aNFT.approve(address(aNftMarket), nftId);
+        aNftMarket.list(nftId, price);
+        vm.stopPrank();
+
+        // Log DOMAIN_SEPARATOR and nonce for debugging
+        console2.log('DOMAIN_SEPARATOR:', vm.toString(paymentToken.DOMAIN_SEPARATOR()));
+        console2.log('Nonce for currentBuyer:', vm.toString(paymentToken.nonces(currentBuyer)));
+        bytes32 permitHash = keccak256(
+            abi.encodePacked(
+                '\x19\x01',
+                paymentToken.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'),
+                        currentBuyer,
+                        address(aNftMarket),
+                        price,
+                        paymentToken.nonces(currentBuyer),
+                        deadline
+                    )
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(currentBuyerPK, permitHash);
+
+        uint256 sellerInitialBalance = paymentToken.balanceOf(seller);
+        uint256 buyerInitialBalance = paymentToken.balanceOf(currentBuyer);
+        // Add assertions for DOMAIN_SEPARATOR and nonce
+        assertEq(paymentToken.DOMAIN_SEPARATOR(), paymentToken.DOMAIN_SEPARATOR());
+        assertEq(paymentToken.nonces(currentBuyer), paymentToken.nonces(currentBuyer));
+
+        vm.startPrank(currentBuyer);
+
+        aNftMarket.permitPrePay(price, deadline, v, r, s);
+
+        assertEq(paymentToken.allowance(currentBuyer, address(aNftMarket)), price);
+
+        bytes32[] memory proof = getMerkleProof(currentBuyer);
+
+        console2.log('Current buyer:', currentBuyer);
+        console2.log('Merkle root:', uint256(merkleRoot));
+        console2.log('Proof length:', proof.length);
+        for (uint256 i = 0; i < proof.length; i++) {
+            console2.log('Proof', i, ':', uint256(proof[i]));
+        }
+
+        aNftMarket.claimNFT(nftId, price, proof, merkleRoot);
+        vm.stopPrank();
+
+        assertEq(paymentToken.balanceOf(seller), sellerInitialBalance + (price / 2));
+        assertEq(paymentToken.balanceOf(currentBuyer), buyerInitialBalance - (price / 2));
+    }
 
     function testMulticallPermitAndClaim(uint256 buyerIndex) public {}
 
