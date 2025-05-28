@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
 
 import { Test, console } from 'forge-std/Test.sol';
 import 'forge-std/console2.sol';
@@ -15,11 +15,6 @@ contract AirdopMerkleNFTMarketTest is Test {
     address public owner;
     address seller;
     address buyer;
-
-    address internal buyer1;
-    address internal buyer2;
-    uint256 internal buyer1PrivateKey;
-    uint256 internal buyer2PrivateKey;
 
     bytes32 merkleRoot;
     address[] public whitelistBuyers;
