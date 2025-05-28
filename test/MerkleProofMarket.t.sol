@@ -131,8 +131,91 @@ contract AirdopMerkleNFTMarketTest is Test {
         assertEq(paymentToken.balanceOf(currentBuyer), buyerInitialBalance - (price / 2));
     }
 
-    function testMulticallPermitAndClaim(uint256 buyerIndex) public {}
+    function testMulticallPermitAndClaim_openzeppelin(uint256 buyerIndex) public {
+        buyerIndex = buyerIndex % whitelistBuyers.length;
+        address currentBuyer = whitelistBuyers[buyerIndex];
+        uint256 currentBuyerPK = whitelistBuyersPrivateKeys[buyerIndex];
 
+        uint256 price = 100 * 10 ** paymentToken.decimals();
+        uint256 deadline = block.timestamp + 1 hours;
+
+        vm.startPrank(seller);
+        aNFT.approve(address(aNftMarket), nftId);
+        aNftMarket.list(nftId, price);
+        vm.stopPrank();
+
+        // Generate permit signature
+        bytes32 permitHash = keccak256(
+            abi.encodePacked(
+                '\x19\x01',
+                paymentToken.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'),
+                        currentBuyer,
+                        address(aNftMarket),
+                        price,
+                        paymentToken.nonces(currentBuyer),
+                        deadline
+                    )
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(currentBuyerPK, permitHash);
+
+        // Get merkle proof
+        bytes32[] memory proof = getMerkleProof(currentBuyer);
+
+        // Prepare multicall data
+        bytes[] memory data = new bytes[](2);
+
+        // Prepare permitPrePay call
+        data[0] = abi.encodeWithSelector(aNftMarket.permitPrePay.selector, price, deadline, v, r, s);
+
+        // Prepare claimNFT call
+        data[1] = abi.encodeWithSelector(aNftMarket.claimNFT.selector, nftId, proof, merkleRoot);
+
+        // Record initial balances
+        uint256 sellerInitialBalance = paymentToken.balanceOf(seller);
+        uint256 buyerInitialBalance = paymentToken.balanceOf(currentBuyer);
+
+        // Execute multicall
+        vm.startPrank(currentBuyer);
+
+        console2.log('Current buyer:', currentBuyer);
+        console2.log('Market address:', address(aNftMarket));
+        console2.log('Token price:', price);
+        console2.log('Merkle root:', uint256(merkleRoot));
+
+        // Execute multicall and catch any revert
+        try aNftMarket.multicall(data) returns (bytes[] memory results) {
+            assertEq(results.length, 2, 'Wrong number of results');
+
+            assertEq(aNFT.ownerOf(nftId), currentBuyer, 'NFT not transferred');
+            assertEq(
+                paymentToken.balanceOf(seller),
+                sellerInitialBalance + (100 * 10 ** paymentToken.decimals()),
+                'Seller balance not updated'
+            );
+            assertEq(
+                paymentToken.balanceOf(currentBuyer),
+                buyerInitialBalance - (100 * 10 ** paymentToken.decimals()),
+                'Buyer balance not updated'
+            );
+
+            (uint256 listedPrice, address listedSeller) = aNftMarket.NFTList(nftId);
+            assertEq(listedSeller, address(0), 'NFT still listed');
+            assertEq(listedPrice, 0, 'NFT price not reset');
+            assertEq(paymentToken.allowance(currentBuyer, address(aNftMarket)), 0, 'Permit not consumed');
+        } catch Error(string memory reason) {
+            console2.log('Multicall failed: ', reason);
+        } catch (bytes memory) {
+            console2.log('Multicall failed with no reason');
+        }
+
+        vm.stopPrank();
+    }
     // compute merkle root
     function computeMerkleRoot(bytes32[] memory leaves) internal pure returns (bytes32) {
         if (leaves.length == 0) return 0;
