@@ -70,7 +70,6 @@ contract AirdopMerkleNFTMarket is IERC721Receiver, Ownable, Multicall {
 
         require(soToken.balanceOf(buyer) >= price, 'Insufficient payment token balance');
 
-        require(price < aNFT.price / 2, 'Insufficient token price to buy NFT');
         require(soToken.transferFrom(buyer, aNFT.seller, aNFT.price / 2), 'Token transfer failed');
 
         nftContract.transferFrom(address(this), buyer, nftId);
