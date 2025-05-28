@@ -64,6 +64,7 @@ contract AirdopMerkleNFTMarketTest is Test {
     }
 
     function testClaimNFT() public {
+        // Setup within the test function
         uint256 buyerIndex = 0; // test the first whitelist buyer
         address currentBuyer = whitelistBuyers[buyerIndex];
         uint256 currentBuyerPK = whitelistBuyersPrivateKeys[buyerIndex];
@@ -71,14 +72,13 @@ contract AirdopMerkleNFTMarketTest is Test {
         uint256 price = 100 * 10 ** paymentToken.decimals();
         uint256 deadline = block.timestamp + 1 hours;
 
+        // Seller list NFT
         vm.startPrank(seller);
         aNFT.approve(address(aNftMarket), nftId);
         aNftMarket.list(nftId, price);
         vm.stopPrank();
 
-        // Log DOMAIN_SEPARATOR and nonce for debugging
-        console2.log('DOMAIN_SEPARATOR:', vm.toString(paymentToken.DOMAIN_SEPARATOR()));
-        console2.log('Nonce for currentBuyer:', vm.toString(paymentToken.nonces(currentBuyer)));
+        // Permit Generation
         bytes32 permitHash = keccak256(
             abi.encodePacked(
                 '\x19\x01',
@@ -98,16 +98,16 @@ contract AirdopMerkleNFTMarketTest is Test {
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(currentBuyerPK, permitHash);
 
+        // Record Initial Balances
         uint256 sellerInitialBalance = paymentToken.balanceOf(seller);
         uint256 buyerInitialBalance = paymentToken.balanceOf(currentBuyer);
         // Add assertions for DOMAIN_SEPARATOR and nonce
         assertEq(paymentToken.DOMAIN_SEPARATOR(), paymentToken.DOMAIN_SEPARATOR());
         assertEq(paymentToken.nonces(currentBuyer), paymentToken.nonces(currentBuyer));
 
+        // Buy NFT
         vm.startPrank(currentBuyer);
-
         aNftMarket.permitPrePay(price, deadline, v, r, s);
-
         assertEq(paymentToken.allowance(currentBuyer, address(aNftMarket)), price);
 
         bytes32[] memory proof = getMerkleProof(currentBuyer);
