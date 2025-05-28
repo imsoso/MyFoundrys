@@ -127,6 +127,7 @@ contract AirdopMerkleNFTMarketTest is Test {
     }
 
     function testMulticallPermitAndClaim_openzeppelin(uint256 buyerIndex) public {
+        // Setup within the test function
         buyerIndex = buyerIndex % whitelistBuyers.length;
         address currentBuyer = whitelistBuyers[buyerIndex];
         uint256 currentBuyerPK = whitelistBuyersPrivateKeys[buyerIndex];
@@ -134,12 +135,13 @@ contract AirdopMerkleNFTMarketTest is Test {
         uint256 price = 100 * 10 ** paymentToken.decimals();
         uint256 deadline = block.timestamp + 1 hours;
 
+        // Seller list NFT
         vm.startPrank(seller);
         aNFT.approve(address(aNftMarket), nftId);
         aNftMarket.list(nftId, price);
         vm.stopPrank();
 
-        // Generate permit signature
+        // Buyer generate permit signature and Merlkle proof
         bytes32 permitHash = keccak256(
             abi.encodePacked(
                 '\x19\x01',
@@ -158,7 +160,6 @@ contract AirdopMerkleNFTMarketTest is Test {
         );
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(currentBuyerPK, permitHash);
-
         // Get merkle proof
         bytes32[] memory proof = getMerkleProof(currentBuyer);
 
